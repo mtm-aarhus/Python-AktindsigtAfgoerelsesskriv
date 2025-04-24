@@ -1,4 +1,3 @@
-
 """The main file of the robot which will install all requirements in
 a virtual environment and then start the actual process.
 """
@@ -14,7 +13,7 @@ os.chdir(script_directory)
 subprocess.run([sys.executable, "-m", "pip", "install", "uv"], check=True)
 
 # Create virtual environment
-subprocess.run(["uv", "venv"], check=True)
+subprocess.run(["uv", "venv", "-p", "3.12.7"], check=True)
 
 # Install packages in the virtual environment
 subprocess.run(["uv", "pip", "install", "."], check=True)
