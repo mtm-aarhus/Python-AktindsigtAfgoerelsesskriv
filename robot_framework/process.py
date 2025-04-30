@@ -328,7 +328,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                 parent.remove(paragraph._element)
                 break
 
-    def update_document_with_besvarelse(doc_path, case_details, DeskproTitel, AnsøgerNavn, AnsøgerEmail, Afdeling, AktindsigtsDato):
+    def update_document_with_besvarelse(doc_path, case_details, DeskproTitel, AnsøgerNavn, AnsøgerEmail, Afdeling, AktindsigtsDato, Beskrivelse):
         doc = Document(doc_path)
         insert_table_at_placeholder(doc, "[Sagstabel]", case_details)
         temp_path = "Afgørelsesskriv.docx"
@@ -339,7 +339,8 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             "[Ansøgernavn]": AnsøgerNavn,
             "[Ansøgermail]": AnsøgerEmail,
             "[Afdeling]": Afdeling,
-            "[Modtagelsesdato]": datetime.datetime.strptime(AktindsigtsDato, "%Y-%m-%dT%H:%M:%SZ").strftime("%d-%m-%Y")
+            "[Modtagelsesdato]": datetime.datetime.strptime(AktindsigtsDato, "%Y-%m-%dT%H:%M:%SZ").strftime("%d-%m-%Y"),
+            "[Beskrivelse]": Beskrivelse
         }
 
         updated_path = replace_placeholders_in_xml(temp_path, replacements)
@@ -354,6 +355,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     DeskProID = queue_json.get('DeskProID')
     KMDNovaURL = orchestrator_connection.get_constant("KMDNovaURL").value
     AktindsigtsDato = queue_json.get("AktindsigtsDato")
+    Beskrivelse = queue_json.get("AnmodningBeskrivelse")
 
     orchestrator_connection.log_info(f'processing {DeskproTitel}')
 
@@ -371,7 +373,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     traverse_and_check_folders(client, f'{parent_folder_url}Dokumentlister/{DeskproTitel}', results, orchestrator_connection)
     doc_path = r'Document.docx'
     orchestrator_connection.log_info('Updating document')
-    update_document_with_besvarelse(doc_path, results, DeskproTitel= DeskproTitel, AnsøgerEmail= AnsøgerEmail, AnsøgerNavn= AnsøgerNavn, Afdeling= Afdeling, AktindsigtsDato = AktindsigtsDato)
+    update_document_with_besvarelse(doc_path, results, DeskproTitel= DeskproTitel, AnsøgerEmail= AnsøgerEmail, AnsøgerNavn= AnsøgerNavn, Afdeling= Afdeling, AktindsigtsDato = AktindsigtsDato, Beskrivelse = Beskrivelse)
     orchestrator_connection.log_info('Setting cases as finished in nova if novacase')
     KMD_access_token = GetKmdAcessToken.GetKMDToken(orchestrator_connection = orchestrator_connection)
     AfslutSag.invoke_AfslutSag(KMDNovaURL, KMD_access_token, DeskProID= DeskProID, orchestrator_connection= orchestrator_connection)
