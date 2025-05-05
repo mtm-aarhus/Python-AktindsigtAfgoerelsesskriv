@@ -331,7 +331,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     def update_document_with_besvarelse(doc_path, case_details, DeskproTitel, AnsøgerNavn, AnsøgerEmail, Afdeling, AktindsigtsDato, Beskrivelse):
         doc = Document(doc_path)
         insert_table_at_placeholder(doc, "[Sagstabel]", case_details)
-        temp_path = "Afgørelsesskriv.docx"
+        temp_path = "Afgørelse.docx"
         doc.save(temp_path)
 
         replacements = {
@@ -378,4 +378,4 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     KMD_access_token = GetKmdAcessToken.GetKMDToken(orchestrator_connection = orchestrator_connection)
     AfslutSag.invoke_AfslutSag(KMDNovaURL, KMD_access_token, DeskProID= DeskProID, orchestrator_connection= orchestrator_connection)
     orchestrator_connection.log_info('Document updating, uploading to sharepoint')
-    upload_to_sharepoint(client, DeskproTitel, r'Afgørelsesskriv.docx', folder_url = f'{parent_folder_url}Aktindsigter/{DeskproTitel}')
+    upload_to_sharepoint(client, DeskproTitel, r'Afgørelse.docx', folder_url = f'{parent_folder_url}Aktindsigter/{DeskproTitel}')
