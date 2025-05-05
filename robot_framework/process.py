@@ -125,70 +125,39 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
             traverse_and_check_folders(client, subfolder_url, results, orchestrator_connection)
 
-    def replace_placeholders_in_xml(docx_path: str, replacements: dict):
-        temp_dir = "temp_xml_unzip"
-        unzip_path = os.path.join(temp_dir, "unzipped")
-        os.makedirs(unzip_path, exist_ok=True)
+    def replace_placeholders_using_docx(doc_path: str, replacements: dict, output_path: str = None):
+        """
+        Erstatter placeholders i dokumentet vha. python-docx på en struktursikker måde.
+        :param doc_path: Sti til originaldokumentet.
+        :param replacements: Dictionary med {placeholder: værdi}
+        :param output_path: (valgfri) Hvor filen skal gemmes. Hvis None overskrives input.
+        """
+        doc = Document(doc_path)
+        for p in doc.paragraphs:
+            for ph, val in replacements.items():
+                if ph in p.text:
+                    for run in p.runs:
+                        if ph in run.text:
+                            run.text = run.text.replace(ph, val)
 
-        with zipfile.ZipFile(docx_path, 'r') as zip_ref:
-            zip_ref.extractall(unzip_path)
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    for ph, val in replacements.items():
+                        if ph in cell.text:
+                            for para in cell.paragraphs:
+                                for run in para.runs:
+                                    if ph in run.text:
+                                        run.text = run.text.replace(ph, val)
 
-        word_folder = os.path.join(unzip_path, "word")
-        targets = [
-            f for f in os.listdir(word_folder)
-            if f.startswith(("document", "header", "footer")) and f.endswith(".xml")
-        ]
+        output = output_path or doc_path
+        doc.save(output)
 
-        ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
-
-        for filename in targets:
-            xml_path = os.path.join(word_folder, filename)
-            tree = ET.parse(xml_path)
-            root = tree.getroot()
-
-            # Gennemgå alle afsnit <w:p>
-            for para in root.findall('.//w:p', ns):
-                runs = para.findall('.//w:r', ns)
-                full_text = ""
-                text_nodes = []
-
-                for run in runs:
-                    for t in run.findall('.//w:t', ns):
-                        text_nodes.append(t)
-                        full_text += t.text if t.text else ""
-
-                replaced_text = full_text
-                for ph, val in replacements.items():
-                    replaced_text = replaced_text.replace(ph, val)
-
-                if replaced_text != full_text:
-                    # Slet eksisterende tekstindhold
-                    for t in text_nodes:
-                        t.text = ""
-
-                    # Fordel ny tekst i samme struktur
-                    remaining = replaced_text
-                    for t in text_nodes:
-                        if not remaining:
-                            break
-                        t.text = remaining[:len(remaining)]
-                        remaining = ""
-
-            tree.write(xml_path, encoding='utf-8', xml_declaration=True)
-
-        # Zip tilbage
-        new_docx_path = docx_path.replace(".docx", "_updated.docx")
-        with zipfile.ZipFile(new_docx_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            for foldername, _, filenames in os.walk(unzip_path):
-                for filename in filenames:
-                    filepath = os.path.join(foldername, filename)
-                    arcname = os.path.relpath(filepath, unzip_path)
-                    zipf.write(filepath, arcname)
-
-        shutil.rmtree(temp_dir)
-        return new_docx_path
 
     def insert_list_at_placeholder(doc, placeholder, case_details, fontsize=9):
+        '''
+        Funktion, der indsætter en liste med alle dokumenterne med begrundelse hvis nej eller delvis og link hvis der er mere end 10 dokumenter
+        '''
         full_access_cases = []
         limited_access_cases = []
 
@@ -343,7 +312,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             "[beskrivelse]": Beskrivelse
         }
 
-        updated_path = replace_placeholders_in_xml(temp_path, replacements)
+        updated_path = replace_placeholders_using_docx(temp_path, replacements)
         os.replace(updated_path, temp_path)
 
 
