@@ -348,16 +348,15 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
 
     queue_json = json.loads(queue_element.data)
-    DeskproTitel = queue_json.get('Aktindsigtsovermappe')
-    AnsøgerNavn = queue_json.get('AnsøgerNavn')
-    AnsøgerEmail = queue_json.get('AnsøgerEmail')
-    Afdeling = queue_json.get('Afdeling')
+    DeskproTitel = queue_json.get('Aktindsigtsovermappe') or ""
+    AnsøgerNavn = queue_json.get('AnsøgerNavn') or ""
+    AnsøgerEmail = queue_json.get('AnsøgerEmail') or ""
+    Afdeling = queue_json.get('Afdeling') or ""
     DeskProID = queue_json.get('DeskProID')
     KMDNovaURL = orchestrator_connection.get_constant("KMDNovaURL").value
-    AktindsigtsDato = queue_json.get("AktindsigtsDato")
-    Beskrivelse = queue_json.get("AnmodningBeskrivelse")
-    # Lovgivning = queue_json.get('Lovgivning')
-
+    AktindsigtsDato = queue_json.get("AktindsigtsDato") or ""
+    Beskrivelse = queue_json.get("AnmodningBeskrivelse") or "" #Skal skrives ud og hentes ned selv 
+    # Lovgivning = queue_json.get('Lovgivning') or None
     orchestrator_connection.log_info(f'processing {DeskproTitel}')
 
     orchestrator_connection.log_info('Getting credentials')
