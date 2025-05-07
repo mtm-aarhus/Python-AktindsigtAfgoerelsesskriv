@@ -356,6 +356,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     KMDNovaURL = orchestrator_connection.get_constant("KMDNovaURL").value
     AktindsigtsDato = queue_json.get("AktindsigtsDato")
     Beskrivelse = queue_json.get("AnmodningBeskrivelse")
+    # Lovgivning = queue_json.get('Lovgivning')
 
     orchestrator_connection.log_info(f'processing {DeskproTitel}')
 
@@ -371,11 +372,38 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     results = {}
     orchestrator_connection.log_info('Going through folder')
     traverse_and_check_folders(client, f'{parent_folder_url}Dokumentlister/{DeskproTitel}', results, orchestrator_connection)
+    # if Afdeling != 'Plan og byg'
+    #     if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
+    #         doc_path = r'Document.docx'
+    #     if Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
+    #         doc_path = r'Document.docx'
+    #     if Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
+    #         doc_path = r'Document.docx'
+    #     if Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
+    #         doc_path = r'Document.docx'
+    #     if Lovgivning == "Andet (Genererer fuld frase)":
+    #         doc_path = r'Document.docx'
+    #     else: 
+    #         doc_path = r'Document.docx'
+    # else:
+    #     if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
+    #         doc_path = r'Document.docx'
+    #     if Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
+    #         doc_path = r'Document.docx'
+    #     if Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
+    #         doc_path = r'Document.docx'
+    #     if Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
+    #         doc_path = r'Document.docx'
+    #     if Lovgivning == "Andet (Genererer fuld frase)":
+    #         doc_path = r'Document.docx'
+    #     else: 
+    #         doc_path = r'Document.docx'
     doc_path = r'Document.docx'
+
     orchestrator_connection.log_info('Updating document')
     update_document_with_besvarelse(doc_path, results, DeskproTitel= DeskproTitel, AnsøgerEmail= AnsøgerEmail, AnsøgerNavn= AnsøgerNavn, Afdeling= Afdeling, AktindsigtsDato = AktindsigtsDato, Beskrivelse = Beskrivelse)
     orchestrator_connection.log_info('Setting cases as finished in nova if novacase')
     KMD_access_token = GetKmdAcessToken.GetKMDToken(orchestrator_connection = orchestrator_connection)
     AfslutSag.invoke_AfslutSag(KMDNovaURL, KMD_access_token, DeskProID= DeskProID, orchestrator_connection= orchestrator_connection)
     orchestrator_connection.log_info('Document updating, uploading to sharepoint')
-    upload_to_sharepoint(client, DeskproTitel, r'Afgørelse.docx', folder_url = f'{parent_folder_url}Aktindsigter/{DeskproTitel}')
+    upload_to_sharepoint(client, DeskproTitel, doc_path, folder_url = f'{parent_folder_url}Aktindsigter/{DeskproTitel}')
