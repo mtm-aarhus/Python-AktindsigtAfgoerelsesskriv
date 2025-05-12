@@ -182,10 +182,10 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     def update_internal_template_with_documenttypes(source_doc_path: str, reasons: list, placeholder: str = "[Dokumenttype]"):
         """
-        Erstatter placeholder [Dokumenttype] i et mellemdokument med en bulletliste over interne dokumenttyper,
-        med visuel indrykning uden afhængighed af Word-stilnavne.
+        Erstatter placeholder [Dokumenttype] i et dokument med en bulletliste over relevante interne dokumenttyper.
+        Tilføjer visuel indrykning og anvender ikke styles, da de ikke altid er defineret.
         """
-        orchestrator_connection.log_info(f"➡️  Opdaterer internt dokument: {source_doc_path}")
+        from docx import Document
         doc = Document(source_doc_path)
 
         internt_reason_to_text = {
@@ -200,7 +200,11 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             if r in internt_reason_to_text
         }
 
-        orchestrator_connection.log_info(f"➡️  Indsætter følgende dokumenttyper: {list(relevant_texts)}")
+        if not relevant_texts:
+            orchestrator_connection.log_info("ℹ️  Ingen interne dokumenttyper fundet – ingen ændringer foretaget.")
+            return
+
+        orchestrator_connection.log_info(f"📝  Indsætter dokumenttyper i {source_doc_path}: {sorted(relevant_texts)}")
 
         for paragraph in doc.paragraphs:
             if placeholder in paragraph.text:
@@ -218,6 +222,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                 break
 
         doc.save(source_doc_path)
+
 
     def replace_placeholder_with_multiple_documents(target_doc_path: str, reason_doc_map: dict, placeholder: str):
         """
@@ -269,25 +274,37 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     def prepare_internal_document_if_needed(reasons: list, lovgivning: str, doc_map_by_lovgivning: dict) -> dict:
         """
-        Finder og tilpasser internt dokument hvis nødvendigt. Returnerer mapping med den tilpassede sti.
-        Funktionen undgår at lave en midlertidig kopi og arbejder direkte med originalstien.
+        Finder og tilpasser internt dokument hvis nødvendigt. Returnerer mapping med den tilpassede sti,
+        så vi undgår at redigere originaldokumentet direkte.
         """
         internal_alias = "__intern__"
         updated_docs = {}
 
         if internal_alias in reasons:
-            internal_template_key = "Internt dokument - ufærdigt arbejdsdokument"
-            original_path = doc_map_by_lovgivning.get(lovgivning, {}).get(internal_template_key)
+            # Brug én af de interne typer til at finde originalfilen
+            internal_keys = [
+                "Internt dokument - ufærdigt arbejdsdokument",
+                "Internt dokument - foreløbige og sagsforberedende overvejelser",
+                "Internt dokument - del af intern beslutningsproces"
+            ]
+            original_path = None
+            for key in internal_keys:
+                path = doc_map_by_lovgivning.get(lovgivning, {}).get(key)
+                if path:
+                    original_path = path
+                    break
 
-            orchestrator_connection.log_info(f"➡️  Der skal bruges internt dokument for alias: {internal_alias}")
-
-            if original_path:
-                update_internal_template_with_documenttypes(original_path, reasons)
-                updated_docs[internal_alias] = original_path
+            if original_path and os.path.exists(original_path):
+                temp_path = f"temp_internal_{uuid.uuid4().hex}.docx"
+                shutil.copyfile(original_path, temp_path)
+                orchestrator_connection.log_info(f"🛠  Tilpasser internt dokument '{original_path}' → '{temp_path}'")
+                update_internal_template_with_documenttypes(temp_path, reasons)
+                updated_docs[internal_alias] = temp_path
             else:
-                orchestrator_connection.log_info(f"⚠️  Dokument ikke fundet: {original_path}")
+                orchestrator_connection.log_info(f"⚠️  Original internt dokument ikke fundet: {original_path}")
 
         return updated_docs
+
 
     
     def extract_unique_reasons(results_dict):
