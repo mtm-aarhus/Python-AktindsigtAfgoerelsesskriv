@@ -274,36 +274,41 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     def prepare_internal_document_if_needed(reasons: list, lovgivning: str, doc_map_by_lovgivning: dict) -> dict:
         """
-        Finder og tilpasser internt dokument hvis nødvendigt. Returnerer mapping med den tilpassede sti,
-        så vi undgår at redigere originaldokumentet direkte.
+        Finder og tilpasser internt dokument hvis nødvendigt. Returnerer mapping med den tilpassede sti.
+        Funktionen undgår at lave en midlertidig kopi og arbejder direkte med originalstien.
         """
         internal_alias = "__intern__"
         updated_docs = {}
 
-        if internal_alias in reasons:
-            # Brug én af de interne typer til at finde originalfilen
-            internal_keys = [
-                "Internt dokument - ufærdigt arbejdsdokument",
-                "Internt dokument - foreløbige og sagsforberedende overvejelser",
-                "Internt dokument - del af intern beslutningsproces"
-            ]
-            original_path = None
-            for key in internal_keys:
-                path = doc_map_by_lovgivning.get(lovgivning, {}).get(key)
-                if path:
-                    original_path = path
-                    break
+        internal_reasons = {
+            "Internt dokument - ufærdigt arbejdsdokument",
+            "Internt dokument - foreløbige og sagsforberedende overvejelser",
+            "Internt dokument - del af intern beslutningsproces"
+        }
 
-            if original_path and os.path.exists(original_path):
-                temp_path = f"temp_internal_{uuid.uuid4().hex}.docx"
-                shutil.copyfile(original_path, temp_path)
-                orchestrator_connection.log_info(f"🛠  Tilpasser internt dokument '{original_path}' → '{temp_path}'")
-                update_internal_template_with_documenttypes(temp_path, reasons)
-                updated_docs[internal_alias] = temp_path
+        # Find de faktiske interne begrundelser i den oprindelige liste
+        used_internal_reasons = [
+            r for r in results.values()  # results skal være tilgængelig i scope
+            for doc in r
+            if doc["decision"] in ["Nej", "Delvis"]
+            and doc["reason"] in internal_reasons
+        ]
+
+        # Hvis alias er brugt, skal vi bygge og tilpasse dokumentet
+        if internal_alias in reasons and used_internal_reasons:
+            internal_template_key = "Internt dokument - ufærdigt arbejdsdokument"
+            original_path = doc_map_by_lovgivning.get(lovgivning, {}).get(internal_template_key)
+
+            orchestrator_connection.log_info(f"➡️  Der skal bruges internt dokument for alias: {internal_alias}")
+
+            if original_path:
+                update_internal_template_with_documenttypes(original_path, used_internal_reasons)
+                updated_docs[internal_alias] = original_path
             else:
-                orchestrator_connection.log_info(f"⚠️  Original internt dokument ikke fundet: {original_path}")
+                orchestrator_connection.log_info(f"⚠️  Dokument ikke fundet: {original_path}")
 
         return updated_docs
+
 
 
     
