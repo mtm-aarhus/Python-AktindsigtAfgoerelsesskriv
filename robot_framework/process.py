@@ -180,28 +180,44 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         doc.save("Afgørelse.docx")
         orchestrator_connection.log_info("✅ Dokument opdateret og gemt som 'Afgørelse.docx'")
 
-    def prepare_internal_document_if_needed(reasons: list, lovgivning: str, doc_map_by_lovgivning: dict) -> dict:
+    def update_internal_template_with_documenttypes(source_doc_path: str, reasons: list, placeholder: str = "[Dokumenttype]"):
         """
-        Finder og tilpasser internt dokument hvis nødvendigt. Returnerer mapping med den tilpassede sti.
-        Funktionen undgår at lave en midlertidig kopi og arbejder direkte med originalstien.
+        Erstatter placeholder [Dokumenttype] i et mellemdokument med en bulletliste over interne dokumenttyper,
+        med visuel indrykning uden afhængighed af Word-stilnavne.
         """
-        internal_alias = "__intern__"
-        updated_docs = {}
+        orchestrator_connection.log_info(f"➡️  Opdaterer internt dokument: {source_doc_path}")
+        doc = Document(source_doc_path)
 
-        if internal_alias in reasons:
-            internal_template_key = "Internt dokument - ufærdigt arbejdsdokument"
-            original_path = doc_map_by_lovgivning.get(lovgivning, {}).get(internal_template_key)
+        internt_reason_to_text = {
+            "Internt dokument - ufærdigt arbejdsdokument": "Udkast til dokumenter",
+            "Internt dokument - foreløbige og sagsforberedende overvejelser": "Dokumenter med foreløbige, interne overvejelser",
+            "Internt dokument - del af intern beslutningsproces": "Dokumenter, som er indgået i en intern beslutningsproces"
+        }
 
-            orchestrator_connection.log_info(f"➡️  Der skal bruges internt dokument for alias: {internal_alias}")
+        relevant_texts = {
+            internt_reason_to_text[r]
+            for r in reasons
+            if r in internt_reason_to_text
+        }
 
-            if original_path:
-                update_internal_template_with_documenttypes(original_path, reasons)
-                updated_docs[internal_alias] = original_path
-            else:
-                orchestrator_connection.log_info(f"⚠️  Dokument ikke fundet: {original_path}")
+        orchestrator_connection.log_info(f"➡️  Indsætter følgende dokumenttyper: {list(relevant_texts)}")
 
-        return updated_docs
+        for paragraph in doc.paragraphs:
+            if placeholder in paragraph.text:
+                parent = paragraph._element.getparent()
+                insert_index = parent.index(paragraph._element)
+                parent.remove(paragraph._element)
 
+                for text in sorted(relevant_texts):
+                    p = doc.add_paragraph()
+                    run = p.add_run(f"• {text}")
+                    run.font.size = Pt(10)
+                    p.paragraph_format.left_indent = Inches(0.5)
+                    parent.insert(insert_index, p._element)
+                    insert_index += 1
+                break
+
+        doc.save(source_doc_path)
 
     def replace_placeholder_with_multiple_documents(target_doc_path: str, reason_doc_map: dict, placeholder: str):
         """
@@ -253,31 +269,26 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     def prepare_internal_document_if_needed(reasons: list, lovgivning: str, doc_map_by_lovgivning: dict) -> dict:
         """
-        Finder og tilpasser internt dokument hvis nødvendigt. Returnerer mapping med den tilpassede sti,
-        så vi undgår at redigere originaldokumentet direkte, hvilket ville give duplikering ved gentagelser.
+        Finder og tilpasser internt dokument hvis nødvendigt. Returnerer mapping med den tilpassede sti.
+        Funktionen undgår at lave en midlertidig kopi og arbejder direkte med originalstien.
         """
-        # Intern-alias, som extract_unique_reasons returnerer
         internal_alias = "__intern__"
         updated_docs = {}
 
         if internal_alias in reasons:
-            # Brug første relevante interne reason til at finde skabelonen
             internal_template_key = "Internt dokument - ufærdigt arbejdsdokument"
             original_path = doc_map_by_lovgivning.get(lovgivning, {}).get(internal_template_key)
 
             orchestrator_connection.log_info(f"➡️  Der skal bruges internt dokument for alias: {internal_alias}")
 
             if original_path:
-                temp_path = f"temp_internal_{uuid.uuid4().hex}.docx"
-                shutil.copyfile(original_path, temp_path)
-                # OBS: vi skal bruge den fulde liste af faktiske reasons til denne funktion, ikke alias
-                update_internal_template_with_documenttypes(temp_path, reasons)
-
-                updated_docs[internal_alias] = temp_path
+                update_internal_template_with_documenttypes(original_path, reasons)
+                updated_docs[internal_alias] = original_path
             else:
                 orchestrator_connection.log_info(f"⚠️  Dokument ikke fundet: {original_path}")
 
         return updated_docs
+
     
     def extract_unique_reasons(results_dict):
         """
