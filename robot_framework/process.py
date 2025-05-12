@@ -288,11 +288,12 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
         # Find de faktiske interne begrundelser i den oprindelige liste
         used_internal_reasons = [
-            r for r in results.values()  # results skal være tilgængelig i scope
+            doc["reason"] for r in results.values()
             for doc in r
             if doc["decision"] in ["Nej", "Delvis"]
             and doc["reason"] in internal_reasons
         ]
+
 
         # Hvis alias er brugt, skal vi bygge og tilpasse dokumentet
         if internal_alias in reasons and used_internal_reasons:
