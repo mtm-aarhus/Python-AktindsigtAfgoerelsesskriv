@@ -341,6 +341,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     response = requests.request("GET", url, headers=headers)
     data = response.json()
     Beskrivelse = data[0].get("request", {}).get("requestDescription", "")
+    orchestrator_connection.log_info(f'Beskrivelse af aktindsigten{Beskrivelse}')
 
     RobotCredentials = orchestrator_connection.get_credential("RobotCredentials")
     username = RobotCredentials.username
