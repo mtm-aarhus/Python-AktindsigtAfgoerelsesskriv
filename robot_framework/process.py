@@ -180,44 +180,28 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         doc.save("Afgørelse.docx")
         orchestrator_connection.log_info("✅ Dokument opdateret og gemt som 'Afgørelse.docx'")
 
-    def update_internal_template_with_documenttypes(source_doc_path: str, reasons: list, placeholder: str = "[Dokumenttype]"):
+    def prepare_internal_document_if_needed(reasons: list, lovgivning: str, doc_map_by_lovgivning: dict) -> dict:
         """
-        Erstatter placeholder [Dokumenttype] i et mellemdokument med en bulletliste over interne dokumenttyper,
-        med visuel indrykning uden afhængighed af Word-stilnavne.
+        Finder og tilpasser internt dokument hvis nødvendigt. Returnerer mapping med den tilpassede sti.
+        Funktionen undgår at lave en midlertidig kopi og arbejder direkte med originalstien.
         """
-        orchestrator_connection.log_info(f"➡️  Opdaterer internt dokument: {source_doc_path}")
-        doc = Document(source_doc_path)
+        internal_alias = "__intern__"
+        updated_docs = {}
 
-        internt_reason_to_text = {
-            "Internt dokument - ufærdigt arbejdsdokument": "Udkast til dokumenter",
-            "Internt dokument - foreløbige og sagsforberedende overvejelser": "Dokumenter med foreløbige, interne overvejelser",
-            "Internt dokument - del af intern beslutningsproces": "Dokumenter, som er indgået i en intern beslutningsproces"
-        }
+        if internal_alias in reasons:
+            internal_template_key = "Internt dokument - ufærdigt arbejdsdokument"
+            original_path = doc_map_by_lovgivning.get(lovgivning, {}).get(internal_template_key)
 
-        relevant_texts = {
-            internt_reason_to_text[r]
-            for r in reasons
-            if r in internt_reason_to_text
-        }
+            orchestrator_connection.log_info(f"➡️  Der skal bruges internt dokument for alias: {internal_alias}")
 
-        orchestrator_connection.log_info(f"➡️  Indsætter følgende dokumenttyper: {list(relevant_texts)}")
+            if original_path:
+                update_internal_template_with_documenttypes(original_path, reasons)
+                updated_docs[internal_alias] = original_path
+            else:
+                orchestrator_connection.log_info(f"⚠️  Dokument ikke fundet: {original_path}")
 
-        for paragraph in doc.paragraphs:
-            if placeholder in paragraph.text:
-                parent = paragraph._element.getparent()
-                insert_index = parent.index(paragraph._element)
-                parent.remove(paragraph._element)
+        return updated_docs
 
-                for text in sorted(relevant_texts):
-                    p = doc.add_paragraph()
-                    run = p.add_run(f"• {text}")
-                    run.font.size = Pt(10)
-                    p.paragraph_format.left_indent = Inches(0.5)
-                    parent.insert(insert_index, p._element)
-                    insert_index += 1
-                break
-
-        doc.save(source_doc_path)
 
     def replace_placeholder_with_multiple_documents(target_doc_path: str, reason_doc_map: dict, placeholder: str):
         """
