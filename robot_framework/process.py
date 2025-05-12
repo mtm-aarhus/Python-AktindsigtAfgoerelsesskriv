@@ -20,6 +20,7 @@ import shutil
 import uuid
 import AfslutSag
 import GetKmdAcessToken
+from urllib.parse import quote
 
 
 # pylint: disable-next=unused-argument
@@ -352,28 +353,28 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
             doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
         elif Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
-            doc_path = r'MISSING.docx'
+            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
         elif Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
-            doc_path = r'MISSING.docx'
+            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
         elif Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
-            doc_path = r'MISSING.docx'
+            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
         elif Lovgivning == "Andet (Genererer fuld frase)":
-            doc_path = r'MISSING.docx'
+            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
         else: 
-            doc_path = r'MISSING.docx'
+            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
     else:
         if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
             doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
         elif Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
-            doc_path = r'MISSING.docx'
+            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
         elif Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
-            doc_path = r'MISSING.docx'
+            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
         elif Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
-            doc_path = r'MISSING.docx'
+            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
         elif Lovgivning == "Andet (Genererer fuld frase)":
-            doc_path = r'MISSING.docx'
+            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
         else: 
-            doc_path = r'MISSING.docx'
+            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
 
     doc_map_by_lovgivning = {
         "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)": {
@@ -472,3 +473,19 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             orchestrator_connection.log_info(f"🗑  Slettede midlertidig fil: {afgorelse_path}")
         else:
             orchestrator_connection.log_info(f"⚠️  Filen '{afgorelse_path}' blev ikke fundet og kunne derfor ikke slettes.")
+    #Putting sharepointlink to case top folder in deskpro
+
+    deskproURL = orchestrator_connection.get_constant('DeskproOvermappeAPILink').value
+    API_url = orchestrator_connection.get_constant("AktbobSharePointURL").value
+
+    payload = json.dumps({
+        "deskproTicketId": f'{DeskProID}',
+        "overmappeURL": f'{API_url}/Delte%20Dokumenter/Aktindsigter/{quote(DeskproTitel)}'
+        })
+    
+    headers = {
+        'Content-Type': 'application/json'
+        }
+    response_deskpro = requests.request("POST", deskproURL, headers=headers, data=payload)
+    response_deskpro.raise_for_status()
+    
