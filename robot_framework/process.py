@@ -126,7 +126,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
             traverse_and_check_folders(client, subfolder_url, results, orchestrator_connection)
 
-    def update_document_with_besvarelse(doc_path, DeskproTitel, AnsøgerNavn, AnsøgerEmail, Afdeling, AktindsigtsDato, Beskrivelse):
+    def update_document_with_besvarelse(doc_path, case_details, DeskproTitel, AnsøgerNavn, AnsøgerEmail, Afdeling, AktindsigtsDato, Beskrivelse):
 
         def replace_in_paragraphs(paragraphs, replacements):
             for para in paragraphs:
