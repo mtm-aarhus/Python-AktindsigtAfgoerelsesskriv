@@ -130,6 +130,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         from docx import Document
 
         def replace_in_paragraphs(paragraphs, replacements):
+            orchestrator_connection.log_info(f'replacements: {replacements}')
             for para in paragraphs:
                 full_text = "".join(run.text for run in para.runs)
                 replaced = False
