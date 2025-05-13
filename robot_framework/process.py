@@ -126,11 +126,9 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
             traverse_and_check_folders(client, subfolder_url, results, orchestrator_connection)
 
-    def update_document_with_besvarelse(doc_path, case_details, DeskproTitel, AnsøgerNavn, AnsøgerEmail, Afdeling, AktindsigtsDato, Beskrivelse):
-        from docx import Document
+    def update_document_with_besvarelse(doc_path, DeskproTitel, AnsøgerNavn, AnsøgerEmail, Afdeling, AktindsigtsDato, Beskrivelse):
 
         def replace_in_paragraphs(paragraphs, replacements):
-            orchestrator_connection.log_info(f'replacements: {replacements}')
             for para in paragraphs:
                 full_text = "".join(run.text for run in para.runs)
                 replaced = False
@@ -361,6 +359,8 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     response = requests.request("GET", url, headers=headers)
     data = response.json()
     Beskrivelse = data[0].get("requestDescription", "")
+    if not Beskrivelse:
+        Beskrivelse = ""
 
     RobotCredentials = orchestrator_connection.get_credential("RobotCredentials")
     username = RobotCredentials.username
