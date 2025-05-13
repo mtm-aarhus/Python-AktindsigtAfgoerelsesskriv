@@ -380,7 +380,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         elif Lovgivning == "Andet (Genererer fuld frase)":
             doc_path = r'MISSING.docx'
         else: 
-            doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
+            doc_path = r'MISSING.docx'
     else:
         if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
             doc_path = r'AB-hovedfrase - Helt eller delvist afslag - OFL og MOL.docx'
@@ -393,8 +393,8 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         elif Lovgivning == "Andet (Genererer fuld frase)":
             doc_path = r'MISSING.docx'
         else: 
-            doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
-            
+            doc_path = r'MISSING.docx'
+
     doc_map_by_lovgivning = {
         "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)": {
             "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - OFL og MOL.docx",
