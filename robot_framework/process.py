@@ -370,9 +370,9 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     if Afdeling != 'Plan og Byggeri':
         if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
-            doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
+            doc_path = r'AB-hovedfrase - Helt eller delvist afslag - OFL og MOL.docx'
         elif Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
-            doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
+            doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL og MOL.docx'
         elif Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
             doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
         elif Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
@@ -383,9 +383,9 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
     else:
         if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
-            doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL'
+            doc_path = r'AB-hovedfrase - Helt eller delvist afslag - OFL og MOL.docx'
         elif Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
-            doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
+            doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL og MOL.docx'
         elif Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
             doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
         elif Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
@@ -394,7 +394,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             doc_path = r'MISSING.docx'
         else: 
             doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
-
+            
     doc_map_by_lovgivning = {
         "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)": {
             "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - OFL og MOL.docx",
