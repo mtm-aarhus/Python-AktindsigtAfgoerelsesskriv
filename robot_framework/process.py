@@ -370,39 +370,39 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     if Afdeling != 'Plan og Byggeri':
         if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
-            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
+            doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
         elif Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
-            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
+            doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
         elif Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
-            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
+            doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
         elif Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
-            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
+            doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
         elif Lovgivning == "Andet (Genererer fuld frase)":
-            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
+            doc_path = r'MISSING.docx'
         else: 
-            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
+            doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
     else:
         if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
-            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
+            doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL'
         elif Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
-            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
+            doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
         elif Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
-            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
+            doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
         elif Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
-            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
+            doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
         elif Lovgivning == "Andet (Genererer fuld frase)":
-            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
+            doc_path = r'MISSING.docx'
         else: 
-            doc_path = r'AktBOB II - Helt eller delvist afslag - OFFL og MOL.docx'
+            doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
 
     doc_map_by_lovgivning = {
         "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)": {
             "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - OFL og MOL.docx",
             "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument - OFL og MOL.docx",
             "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - OFL og MOL.docx",
-            "Andre dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "MISSING.docx",
-            "Andre dokumenter - vedr. udførelse af sekretariatsopgave": "MISSING.docx",
-            "Andre dokumenter - Andet (uddybes i afgørelse)": "MISSING.docx",
+            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "MISSING.docx",
+            "Særlige dokumenter - statistik og undersøgelser": "MISSING.docx",
+            "Særlige dokumenter - straffesag": "MISSING.docx",
             "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - OFL og MOL.docx",
             "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - OFL og MOL.docx",
             "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "MISSING.docx",
@@ -412,9 +412,9 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - OFL og MOL.docx",
             "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-frase - internt dokument - OFL og MOL.docx",
             "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - OFL og MOL.docx",
-            "Andre dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "MISSING.docx",
-            "Andre dokumenter - vedr. udførelse af sekretariatsopgave": "MISSING.docx",
-            "Andre dokumenter - Andet (uddybes i afgørelse)": "MISSING.docx",
+            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "MISSING.docx",
+            "Særlige dokumenter - statistik og undersøgelser": "MISSING.docx",
+            "Særlige dokumenter - straffesag": "MISSING.docx",
             "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - OFL og MOL.docx",
             "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - OFL og MOL.docx",
             "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "MISSING.docx",
@@ -424,9 +424,9 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - OFL og MOL.docx",
             "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument - OFL og MOL.docx",
             "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - OFL og MOL.docx",
-            "Andre dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "MISSING.docx",
-            "Andre dokumenter - vedr. udførelse af sekretariatsopgave": "MISSING.docx",
-            "Andre dokumenter - Andet (uddybes i afgørelse)": "MISSING.docx",
+            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "MISSING.docx",
+            "Særlige dokumenter - statistik og undersøgelser": "MISSING.docx",
+            "Særlige dokumenter - straffesag": "MISSING.docx",
             "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - OFL og MOL.docx",
             "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - OFL og MOL.docx",
             "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "MISSING.docx",
@@ -436,9 +436,9 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - OFL og MOL.docx",
             "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument - OFL og MOL.docx",
             "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - OFL og MOL.docx",
-            "Andre dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "MISSING.docx",
-            "Andre dokumenter - vedr. udførelse af sekretariatsopgave": "MISSING.docx",
-            "Andre dokumenter - Andet (uddybes i afgørelse)": "MISSING.docx",
+            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "MISSING.docx",
+            "Særlige dokumenter - statistik og undersøgelser": "MISSING.docx",
+            "Særlige dokumenter - straffesag": "MISSING.docx",
             "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - OFL og MOL.docx",
             "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - OFL og MOL.docx",
             "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "MISSING.docx",
@@ -448,9 +448,9 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - OFL og MOL.docx",
             "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument - OFL og MOL.docx",
             "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - OFL og MOL.docx",
-            "Andre dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "MISSING.docx",
-            "Andre dokumenter - vedr. udførelse af sekretariatsopgave": "MISSING.docx",
-            "Andre dokumenter - Andet (uddybes i afgørelse)": "MISSING.docx",
+            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "MISSING.docx",
+            "Særlige dokumenter - statistik og undersøgelser": "MISSING.docx",
+            "Særlige dokumenter - straffesag": "MISSING.docx",
             "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - OFL og MOL.docx",
             "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - OFL og MOL.docx",
             "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "MISSING.docx",
