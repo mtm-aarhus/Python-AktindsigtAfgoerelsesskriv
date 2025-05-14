@@ -308,9 +308,6 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                 orchestrator_connection.log_info(f"⚠️  Dokument ikke fundet: {original_path}")
 
         return updated_docs
-
-
-
     
     def extract_unique_reasons(results_dict):
         """
@@ -328,6 +325,9 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         for docs in results_dict.values():
             for doc in docs:
                 if doc["decision"] in ["Nej", "Delvis"] and doc["reason"] and str(doc["reason"]).strip():
+                    if doc['reason'] == None:
+                        orchestrator_connection.log_info('Ingen begrundelse valgt')
+                        reason = 'Intet valgt'
                     reason = doc["reason"].strip()
                     if reason in internal_reasons:
                         cleaned.add(internal_alias)
@@ -400,49 +400,53 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - OFL og MOL.docx",
             "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument - OFL og MOL.docx",
             "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - OFL og MOL.docx",
-            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "MISSING.docx",
+            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "AB-minifrase - sagkyndig rådgivning - OFL og MOL.docx",
             "Særlige dokumenter - statistik og undersøgelser": "MISSING.docx",
-            "Særlige dokumenter - straffesag": "MISSING.docx",
+            "Særlige dokumenter - straffesag": "AB-minifrase - Dokument i straffesag - OFL og MOL.docx",
             "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - OFL og MOL.docx",
             "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - OFL og MOL.docx",
             "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "MISSING.docx",
-            " ": "MISSING.docx"
+            " ": "MISSING.docx",
+            "Intet valgt": "Ingen begrundelse valgt.docx"
         },
         "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)": {
-            "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - OFL og MOL.docx",
-            "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-frase - internt dokument - OFL og MOL.docx",
-            "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - OFL og MOL.docx",
-            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "MISSING.docx",
+            "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - FVL og MOL.docx",
+            "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument - FVL og MOL.docx",
+            "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - FVL og MOL.docx",
+            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "AB-minifrase - sagkyndig rådgivning - FVL og MOL.docx",
             "Særlige dokumenter - statistik og undersøgelser": "MISSING.docx",
-            "Særlige dokumenter - straffesag": "MISSING.docx",
-            "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - OFL og MOL.docx",
-            "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - OFL og MOL.docx",
+            "Særlige dokumenter - straffesag": "AB-minifrase - Dokument i straffesag - FVL og MOL.docx",
+            "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - FVL og MOL.docx",
+            "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - FVL og MOL.docx",
             "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "MISSING.docx",
-            " ": "MISSING.docx"
+            " ": "MISSING.docx",
+            "Intet valgt": "Ingen begrundelse valgt.docx"
         },
         "Part, ingen miljøoplysning (2014 forvaltningsloven)": {
-            "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - OFL og MOL.docx",
-            "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument - OFL og MOL.docx",
-            "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - OFL og MOL.docx",
-            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "MISSING.docx",
+            "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - FVL.docx",
+            "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument - FVL.docx",
+            "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - FVL.docx",
+            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "AB-minifrase - Sagkyndig rådgivning - FVL.docx",
             "Særlige dokumenter - statistik og undersøgelser": "MISSING.docx",
-            "Særlige dokumenter - straffesag": "MISSING.docx",
-            "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - OFL og MOL.docx",
-            "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - OFL og MOL.docx",
+            "Særlige dokumenter - straffesag": "AB-minifrase - Dokument i straffesag - FVL.docx",
+            "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - FVL.docx",
+            "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - FVL.docx",
             "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "MISSING.docx",
-            " ": "MISSING.docx"
+            " ": "MISSING.docx",
+            "Intet valgt": "Ingen begrundelse valgt.docx"
         },
         "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)": {
-            "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - OFL og MOL.docx",
-            "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument - OFL og MOL.docx",
-            "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - OFL og MOL.docx",
-            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "MISSING.docx",
+            "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - Internt dokument - OFL.docx",
+            "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - Internt dokument - OFL.docx",
+            "Internt dokument - del af intern beslutningsproces": "AB-minifrase - Internt dokument - OFL.docx",
+            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "AB-minifrase - Sagkyndig rådgivning - OFL.docx",
             "Særlige dokumenter - statistik og undersøgelser": "MISSING.docx",
-            "Særlige dokumenter - straffesag": "MISSING.docx",
-            "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - OFL og MOL.docx",
-            "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - OFL og MOL.docx",
+            "Særlige dokumenter - straffesag": "AB-minifrase - Dokument i straffesag - OFL.docx",
+            "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - OFL.docx",
+            "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - OFL.docx",
             "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "MISSING.docx",
-            " ": "MISSING.docx"
+            " ": "MISSING.docx",
+            "Intet valgt": "Ingen begrundelse valgt.docx"
         },
         "Ved ikke (Genererer fuld frase)": {
             "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - OFL og MOL.docx",
@@ -454,9 +458,11 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - OFL og MOL.docx",
             "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - OFL og MOL.docx",
             "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "MISSING.docx",
-            " ": "MISSING.docx"
+            " ": "MISSING.docx",
+            "Intet valgt": "Ingen begrundelse valgt.docx"
         }
     }
+
     #Skal den lokale version af afgørelse slettes?
     slet = True
 
@@ -507,4 +513,3 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         }
     response_deskpro = requests.request("POST", deskproURL, headers=headers, data=payload)
     response_deskpro.raise_for_status()
-    
