@@ -325,6 +325,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         for docs in results_dict.values():
             for doc in docs:
                 if doc["decision"] in ["Nej", "Delvis"] and doc["reason"] and str(doc["reason"]).strip():
+                    orchestrator_connection.log_info(type(reason))
                     if doc['reason'] == None:
                         orchestrator_connection.log_info('Ingen begrundelse valgt')
                         reason = 'Intet valgt'
