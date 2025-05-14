@@ -21,6 +21,7 @@ import uuid
 import AfslutSag
 import GetKmdAcessToken
 from urllib.parse import quote
+import math
 
 
 # pylint: disable-next=unused-argument
@@ -325,8 +326,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         for docs in results_dict.values():
             for doc in docs:
                 if doc["decision"] in ["Nej", "Delvis"] and doc["reason"] and str(doc["reason"]).strip():
-                    orchestrator_connection.log_info(f'GRUUUUND {doc['reason']}')
-                    if doc['reason'] == None:
+                    if math.isnan(doc['reason']):
                         orchestrator_connection.log_info('Ingen begrundelse valgt')
                         reason = 'Intet valgt'
                     reason = doc["reason"].strip()
