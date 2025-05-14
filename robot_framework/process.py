@@ -326,7 +326,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         for docs in results_dict.values():
             for doc in docs:
                 if doc["decision"] in ["Nej", "Delvis"] and doc["reason"] and str(doc["reason"]).strip():
-                    if doc['reason'].lower() == 'nan':
+                    if isinstance(reason_raw, float) and math.isnan(reason_raw):
                         orchestrator_connection.log_info('Ingen begrundelse valgt')
                         reason = 'Intet valgt'
                     reason = doc["reason"].strip()
