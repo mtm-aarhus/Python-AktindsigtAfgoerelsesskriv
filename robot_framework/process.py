@@ -325,12 +325,21 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         cleaned = set()
         for docs in results_dict.values():
             for doc in docs:
-                if doc["decision"] in ["Nej", "Delvis"] and doc["reason"] and str(doc["reason"]).strip():
+                if doc.get("decision") in ["Nej", "Delvis"]:
                     reason_raw = doc.get("reason")
-                    if isinstance(reason_raw, float) and math.isnan(reason_raw):
+
+                    # Hvis None eller NaN (float)
+                    if reason_raw is None or (isinstance(reason_raw, float) and math.isnan(reason_raw)):
                         orchestrator_connection.log_info('Ingen begrundelse valgt')
                         reason = 'Intet valgt'
-                    reason = doc["reason"].strip()
+                    else:
+                        reason_str = str(reason_raw).strip()
+                        if not reason_str or reason_str.lower() == "nan":
+                            orchestrator_connection.log_info('Ingen begrundelse valgt')
+                            reason = 'Intet valgt'
+                        else:
+                            reason = reason_str
+
                     if reason in internal_reasons:
                         cleaned.add(internal_alias)
                     else:
