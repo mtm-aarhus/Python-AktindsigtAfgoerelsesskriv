@@ -483,6 +483,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     update_document_with_besvarelse(doc_path, results, DeskproTitel= DeskproTitel, AnsøgerEmail= AnsøgerEmail, AnsøgerNavn= AnsøgerNavn, Afdeling= Afdeling, AktindsigtsDato = AktindsigtsDato, Beskrivelse = Beskrivelse)
 
     unique_reasons = extract_unique_reasons(results)
+    orchestrator_connection.log_info(unique_reasons)
     internal_docs = prepare_internal_document_if_needed(unique_reasons, Lovgivning, doc_map_by_lovgivning)
     used_doc_map = {}
 
