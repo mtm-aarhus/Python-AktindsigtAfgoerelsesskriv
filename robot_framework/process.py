@@ -17,9 +17,6 @@ from docx import Document
 import os
 import requests
 import shutil
-import uuid
-import AfslutSag
-import GetKmdAcessToken
 from urllib.parse import quote
 import math
 
@@ -495,11 +492,6 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                 used_doc_map[reason] = doc
 
     replace_placeholder_with_multiple_documents("Afgørelse.docx", used_doc_map, "[RELEVANTE_TEKSTER]")
-
-    orchestrator_connection.log_info('Setting cases as finished in nova if novacase')
-    KMD_access_token = GetKmdAcessToken.GetKMDToken(orchestrator_connection = orchestrator_connection)
-    AfslutSag.invoke_AfslutSag(KMDNovaURL, KMD_access_token, DeskProID= DeskProID, orchestrator_connection= orchestrator_connection)
-
     orchestrator_connection.log_info('Document updating, uploading to sharepoint')
     upload_to_sharepoint(client, DeskproTitel, r'Afgørelse.docx', folder_url = f'{parent_folder_url}Aktindsigter/{DeskproTitel}')
     if slet:
