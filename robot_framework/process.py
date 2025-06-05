@@ -399,7 +399,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         elif Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
             doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
         elif Lovgivning == "Andet (Genererer fuld frase)":
-            doc_path = r'MISSING.docx'
+            doc_path = r'AB-hovedfrase - Alle regelsæt.docx'
         else: 
             doc_path = r'MISSING.docx'
 
@@ -457,15 +457,15 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             "Intet valgt": "Ingen begrundelse valgt.docx"
         },
         "Ved ikke (Genererer fuld frase)": {
-            "Internt dokument - ufærdigt arbejdsdokument": "MISSING.docx",
-            "Internt dokument - foreløbige og sagsforberedende overvejelser": "MISSING.docx",
-            "Internt dokument - del af intern beslutningsproces": "MISSING.docx",
-            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "MISSING.docx",
-            "Særlige dokumenter - statistik og undersøgelser": "MISSING.docx",
-            "Særlige dokumenter - straffesag": "MISSING.docx",
-            "Tavshedsbelagte oplysninger - om private forhold": "MISSING.docx",
-            "Tavshedsbelagte oplysninger - forretningsforhold":"MISSING.docx",
-            "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "MISSING.docx",
+            "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument alle.docx",
+            "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument alle.docx",
+            "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument alle.docx",
+            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "AB-minifrase - sagkyndig rådgivning alle.docx",
+            "Særlige dokumenter - statistik og undersøgelser": "AB-minifrase - statisktik og undersøgelser - alle.docx",
+            "Særlige dokumenter - straffesag": "AB-minifrase - Dokument i straffesag alle.docx",
+            "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold alle.docx",
+            "Tavshedsbelagte oplysninger - forretningsforhold":"AB-minifrase - Forretningsforhold alle.docx",
+            "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "AB-minifrase - Tavhedsbelagte oplysninger - alle.docx",
             " ": "Ingen begrundelse valgt.docx",
             "Intet valgt": "Ingen begrundelse valgt.docx"
         }
