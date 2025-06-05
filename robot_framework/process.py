@@ -386,7 +386,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         elif Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
             doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
         elif Lovgivning == "Andet (Genererer fuld frase)":
-            doc_path = r'AB-hovedfrase - Alle regelsæt'
+            doc_path = r'AB-hovedfrase - Alle regelsæt.docx'
         else: 
             doc_path = r'MISSING.docx'
     else:
