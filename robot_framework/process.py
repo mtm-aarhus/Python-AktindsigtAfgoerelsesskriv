@@ -357,7 +357,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     #Getting oo stuff
     API_aktbob = orchestrator_connection.get_credential('AktbobAPIKey')
-    url = f'{API_aktbob.username}/cases?deskproId={DeskProID}'
+    url = f'{API_aktbob.username}/submissions?deskproId={DeskProID}'
     key = API_aktbob.password
 
     #Getting description of aktindsigt
