@@ -346,14 +346,17 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     #Getting queue elements
     queue_json = json.loads(queue_element.data)
-    DeskproTitel = queue_json.get('Aktindsigtsovermappe') or ""
+    DeskproTitel = queue_json.get('Aktindsigtsovermappe') 
     AnsøgerNavn = queue_json.get('AnsøgerNavn') or ""
     AnsøgerEmail = queue_json.get('AnsøgerEmail') or ""
     Afdeling = queue_json.get('Afdeling') or ""
     DeskProID = queue_json.get('DeskProID')
     KMDNovaURL = orchestrator_connection.get_constant("KMDNovaURL").value
     AktindsigtsDato = queue_json.get("AktindsigtsDato") or ""
-    Lovgivning = queue_json.get('Lovgivning') or None
+    Lovgivning = queue_json.get('Lovgivning')
+
+    if Lovgivning == None or DeskproTitel == None or DeskProID == None:
+        raise Exception("Der mangler information i køelementet")
 
     #Getting oo stuff
     API_aktbob = orchestrator_connection.get_credential('AktbobAPIKey')
