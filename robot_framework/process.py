@@ -355,7 +355,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     AktindsigtsDato = queue_json.get("AktindsigtsDato") or ""
     Lovgivning = queue_json.get('Lovgivning')
 
-    if Lovgivning == None or DeskproTitel == None or DeskProID == None:
+    if Lovgivning is None or DeskproTitel is None or DeskProID is None:
         raise Exception("Der mangler information i køelementet")
 
     #Getting oo stuff
