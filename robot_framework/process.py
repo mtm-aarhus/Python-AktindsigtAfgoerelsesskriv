@@ -33,7 +33,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             "thumbprint": thumbprint,
             "cert_path": cert_path
         }
-        ctx = ClientContext(sharepoint_site).with_client_certificate(**cert_credentials)
+        ctx = ClientContext(sharepoint_site_url).with_client_certificate(**cert_credentials)
         web = ctx.web
         ctx.load(web)
         ctx.execute_query()
