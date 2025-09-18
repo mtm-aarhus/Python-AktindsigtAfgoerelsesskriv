@@ -26,8 +26,14 @@ from email.message import EmailMessage
 # pylint: disable-next=unused-argument
 def process(orchestrator_connection: OrchestratorConnection, queue_element: QueueElement | None = None) -> None:
     """This module contains the main process of the robot."""
-    def sharepoint_client(username, password, sharepoint_site_url):
-        ctx = ClientContext(sharepoint_site_url).with_credentials(UserCredential(username, password))
+    def sharepoint_client(username, password, sharepoint_site_url, tenant, client_id, thumbprint, cert_path):
+        cert_credentials = {
+            "tenant": tenant,
+            "client_id": client_id,
+            "thumbprint": thumbprint,
+            "cert_path": cert_path
+        }
+        ctx = ClientContext(sharepoint_site).with_client_certificate(**cert_credentials)
         web = ctx.web
         ctx.load(web)
         ctx.execute_query()
@@ -509,8 +515,9 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
         #Skal den lokale version af afgørelse slettes?
         slet = True
-
-        client = sharepoint_client(username, password, sharepoint_site_url)
+        certification = orchestrator_connection.get_credential("SharePointCert")
+        api = orchestrator_connection.get_credential("SharePointAPI")
+        client = sharepoint_client(username, password, sharepoint_site_url, tenant = api.username, client_id = api.password, thumbprint = certification.username , cert_path = certification.password)
         results = {}
         traverse_and_check_folders(client, f'{parent_folder_url}Dokumentlister/{DeskproTitel}', results, orchestrator_connection)
         update_document_with_besvarelse(doc_path, results, DeskproTitel= DeskproTitel, AnsøgerEmail= AnsøgerEmail, AnsøgerNavn= AnsøgerNavn, Afdeling= Afdeling, AktindsigtsDato = AktindsigtsDato, Beskrivelse = Beskrivelse)
