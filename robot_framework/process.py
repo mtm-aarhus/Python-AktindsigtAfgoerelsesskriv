@@ -21,9 +21,21 @@ from urllib.parse import quote
 import math
 import smtplib
 from email.message import EmailMessage
+from docx import Document
 
+def safe_open_docx(path):
+    """Kopierer filen lokalt og åbner kopien, så originalen ikke røres."""
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Filen findes ikke: {path}")
 
-# pylint: disable-next=unused-argument
+    # lav lokal kopi med unikt navn
+    filename = os.path.basename(path)
+    local_copy = os.path.join(os.getcwd(), f"temp_{filename}")
+    shutil.copy2(path, local_copy)
+
+    # åbn kopien
+    return Document(local_copy), local_copy
+
 def process(orchestrator_connection: OrchestratorConnection, queue_element: QueueElement | None = None) -> None:
     """This module contains the main process of the robot."""
     def sharepoint_client(username, password, sharepoint_site_url, tenant, client_id, thumbprint, cert_path):
@@ -166,7 +178,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             "[beskrivelse]": Beskrivelse
         }
 
-        doc = Document(doc_path)
+        doc, temp_path = safe_open_docx(doc_path)
 
         # 1. Brødtekst og tabeller i hoveddokumentet
         replace_in_paragraphs(doc.paragraphs, replacements)
@@ -183,6 +195,8 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                 replace_in_tables(footer.tables, replacements)
 
         doc.save("Afgørelse.docx")
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
         orchestrator_connection.log_info("✅ Dokument opdateret og gemt som 'Afgørelse.docx'")
 
     def update_internal_template_with_documenttypes(source_doc_path: str, reasons: list, placeholder: str = "[Dokumenttype]"):
@@ -190,7 +204,6 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         Erstatter placeholder [Dokumenttype] i et dokument med en bulletliste over relevante interne dokumenttyper.
         Tilføjer visuel indrykning og anvender ikke styles, da de ikke altid er defineret.
         """
-        from docx import Document
         doc = Document(source_doc_path)
 
         internt_reason_to_text = {
@@ -258,11 +271,13 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                         print(f"    ⚠️  Fil ikke fundet: {doc_path}")
                         continue
 
-                    source_doc = Document(doc_path)
+                    source_doc, temp_path = safe_open_docx(doc_path)
                     for para in source_doc.paragraphs:
                         para_copy = deepcopy(para._element)
                         parent.insert(insert_index, para_copy)
                         insert_index += 1
+                    if os.path.exists(temp_path):
+                        os.remove(temp_path)
 
                 break
                 # Ryd op i midlertidige dokumenter
@@ -275,6 +290,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                     orchestrator_connection.log_info(f"⚠️  Kunne ikke slette {path}: {e}")
 
             target_doc.save(target_doc_path)
+
         orchestrator_connection.log_info(f"✅  Fletning afsluttet og gemt i: {target_doc_path}")
 
     def prepare_internal_document_if_needed(reasons: list, lovgivning: str, doc_map_by_lovgivning: dict) -> dict:
