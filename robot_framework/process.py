@@ -426,7 +426,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
         if Afdeling != 'Plan og Byggeri':
             if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
-                doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - OFL og MOL.docx'
+                doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - miljøopl - ikke part.docx'
             elif Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
                 doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - FVL og MOL.docx'
             elif Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
@@ -439,7 +439,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                 doc_path = r'MISSING.docx'
         else:
             if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
-                doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - OFL og MOL.docx'
+                doc_path = hovedfraser_folder +  r'AB-hovedfrase - Helt eller delvist afslag - miljøopl - ikke part.docx'
             elif Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
                 doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - FVL og MOL.docx'
             elif Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
