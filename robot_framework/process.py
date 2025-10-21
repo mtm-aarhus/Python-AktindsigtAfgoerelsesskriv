@@ -204,7 +204,8 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         Erstatter placeholder [Dokumenttype] i et dokument med en bulletliste over relevante interne dokumenttyper.
         Tilføjer visuel indrykning og anvender ikke styles, da de ikke altid er defineret.
         """
-        doc = Document(source_doc_path)
+        # Lav en midlertidig lokal kopi
+        doc, temp_path = safe_open_docx(source_doc_path)
 
         internt_reason_to_text = {
             "Internt dokument - ufærdigt arbejdsdokument": "Udkast til dokumenter",
@@ -239,7 +240,12 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                     insert_index += 1
                 break
 
-        doc.save(source_doc_path)
+        # Gem ændringerne i den lokale kopi — ikke på netværket
+        doc.save(temp_path)
+        orchestrator_connection.log_info(f"✅ Midlertidig intern template opdateret: {temp_path}")
+
+        return temp_path  # returnér stien til kopien
+
 
 
     def replace_placeholder_with_multiple_documents(target_doc_path: str, reason_doc_map: dict, placeholder: str):
@@ -324,8 +330,9 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             orchestrator_connection.log_info(f"➡️  Der skal bruges internt dokument for alias: {internal_alias}")
 
             if original_path:
-                update_internal_template_with_documenttypes(original_path, used_internal_reasons)
-                updated_docs[internal_alias] = original_path
+                temp_internal_path = update_internal_template_with_documenttypes(original_path, used_internal_reasons)
+                updated_docs[internal_alias] = temp_internal_path
+
             else:
                 orchestrator_connection.log_info(f"⚠️  Dokument ikke fundet: {original_path}")
 
