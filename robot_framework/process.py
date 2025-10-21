@@ -417,29 +417,35 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         password = RobotCredentials.password
         sharepoint_site_url = orchestrator_connection.get_constant("AktbobSharePointURL").value
         parent_folder_url = sharepoint_site_url.split(".com")[-1] +'/Delte Dokumenter/'
+        main_folder = r"\\adm.aarhuskommune.dk\AAK\Hotel1\TDS\dynamictemplate\Fraser\MTM\Aktindsigt\"
+        hovedfraser_folder = main_folder + r"AKTBOB Hovedfraser (systemmappe)"
+        u1_folder = main_folder + r"Undtagelser\U 1 Miljøopl., ikke part (MOL + OFL)"
+        u2_folder = main_folder + r"Undtagelser\U 2 Miljøopl., part (MOL + FVL)"
+        u3_folder = main_folder + r"Undtagelser\U 3 miljøopl., ikke part (OFL)"
+        u4_folder = main_folder + r"Undtagelser\U 4 ikke miljøopl., part (FVL)"
 
         if Afdeling != 'Plan og Byggeri':
             if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
-                doc_path = r'AB-hovedfrase - Helt eller delvist afslag - OFL og MOL.docx'
+                doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - OFL og MOL.docx'
             elif Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
-                doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL og MOL.docx'
+                doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - FVL og MOL.docx'
             elif Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
-                doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
+                doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
             elif Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
-                doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
+                doc_path = hovedfraser_folder + r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
             elif Lovgivning == "Andet (Genererer fuld frase) ":
                 doc_path = r'AB-hovedfrase - Alle regelsæt.docx'
             else: 
                 doc_path = r'MISSING.docx'
         else:
             if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
-                doc_path = r'AB-hovedfrase - Helt eller delvist afslag - OFL og MOL.docx'
+                doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - OFL og MOL.docx'
             elif Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
-                doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL og MOL.docx'
+                doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - FVL og MOL.docx'
             elif Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
-                doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
+                doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
             elif Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
-                doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
+                doc_path = hovedfraser_folder + r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
             elif Lovgivning == "Andet (Genererer fuld frase) ":
                 doc_path = r'AB-hovedfrase - Alle regelsæt.docx'
             else: 
@@ -447,53 +453,53 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
         doc_map_by_lovgivning = {
             "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)": {
-                "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - OFL og MOL.docx",
-                "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument - OFL og MOL.docx",
-                "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - OFL og MOL.docx",
-                "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "AB-minifrase - sagkyndig rådgivning - OFL og MOL.docx",
+                "Internt dokument - ufærdigt arbejdsdokument": u1_folder + "AB-minifrase - internt dokument - OFL og MOL.docx",
+                "Internt dokument - foreløbige og sagsforberedende overvejelser": u1_folder + "AB-minifrase - internt dokument - OFL og MOL.docx",
+                "Internt dokument - del af intern beslutningsproces": u1_folder + "AB-minifrase - internt dokument - OFL og MOL.docx",
+                "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": u1_folder + "AB-minifrase - sagkyndig rådgivning - OFL og MOL.docx",
                 "Særlige dokumenter - statistik og undersøgelser": "AB-minifrase - statisktik og undersøgelser - alle.docx",
-                "Særlige dokumenter - straffesag": "AB-minifrase - Dokument i straffesag - OFL og MOL.docx",
-                "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - OFL og MOL.docx",
-                "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - OFL og MOL.docx",
+                "Særlige dokumenter - straffesag": u1_folder + "AB-minifrase - Dokument i straffesag - OFL og MOL.docx",
+                "Tavshedsbelagte oplysninger - om private forhold": u1_folder + "AB-minifrase - Private forhold - OFL og MOL.docx",
+                "Tavshedsbelagte oplysninger - forretningsforhold": u1_folder + "AB-minifrase - Forretningsforhold - OFL og MOL.docx",
                 "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "AB-minifrase - Tavhedsbelagte oplysninger - alle.docx",
                 " ": "Ingen begrundelse valgt.docx",
                 "Intet valgt": "Ingen begrundelse valgt.docx"
             },
             "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)": {
-                "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - FVL og MOL.docx",
-                "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument - FVL og MOL.docx",
-                "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - FVL og MOL.docx",
-                "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "AB-minifrase - sagkyndig rådgivning - FVL og MOL.docx",
+                "Internt dokument - ufærdigt arbejdsdokument": u2_folder + "AB-minifrase - internt dokument - FVL og MOL.docx",
+                "Internt dokument - foreløbige og sagsforberedende overvejelser": u2_folder + "AB-minifrase - internt dokument - FVL og MOL.docx",
+                "Internt dokument - del af intern beslutningsproces": u2_folder + "AB-minifrase - internt dokument - FVL og MOL.docx",
+                "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": u2_folder + "AB-minifrase - sagkyndig rådgivning - FVL og MOL.docx",
                 "Særlige dokumenter - statistik og undersøgelser": "AB-minifrase - statisktik og undersøgelser - alle.docx",
-                "Særlige dokumenter - straffesag": "AB-minifrase - Dokument i straffesag - FVL og MOL.docx",
-                "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - FVL og MOL.docx",
-                "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - FVL og MOL.docx",
+                "Særlige dokumenter - straffesag": u2_folder + "AB-minifrase - Dokument i straffesag - FVL og MOL.docx",
+                "Tavshedsbelagte oplysninger - om private forhold": u2_folder + "AB-minifrase - Private forhold - FVL og MOL.docx",
+                "Tavshedsbelagte oplysninger - forretningsforhold": u2_folder + "AB-minifrase - Forretningsforhold - FVL og MOL.docx",
                 "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "AB-minifrase - Tavhedsbelagte oplysninger - alle.docx",
                 " ": "Ingen begrundelse valgt.docx",
                 "Intet valgt": "Ingen begrundelse valgt.docx"
             },
             "Part, ingen miljøoplysning (2014 forvaltningsloven)": {
-                "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - FVL.docx",
-                "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument - FVL.docx",
-                "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - FVL.docx",
-                "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "AB-minifrase - Sagkyndig rådgivning - FVL.docx",
+                "Internt dokument - ufærdigt arbejdsdokument": u3_folder + "AB-minifrase - internt dokument - FVL.docx",
+                "Internt dokument - foreløbige og sagsforberedende overvejelser": u3_folder + "AB-minifrase - internt dokument - FVL.docx",
+                "Internt dokument - del af intern beslutningsproces": u3_folder + "AB-minifrase - internt dokument - FVL.docx",
+                "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": u3_folder + "AB-minifrase - Sagkyndig rådgivning - FVL.docx",
                 "Særlige dokumenter - statistik og undersøgelser": "AB-minifrase - statisktik og undersøgelser - alle.docx",
-                "Særlige dokumenter - straffesag": "AB-minifrase - Dokument i straffesag - FVL.docx",
-                "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - FVL.docx",
-                "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - FVL.docx",
+                "Særlige dokumenter - straffesag": u3_folder + "AB-minifrase - Dokument i straffesag - FVL.docx",
+                "Tavshedsbelagte oplysninger - om private forhold": u3_folder + "AB-minifrase - Private forhold - FVL.docx",
+                "Tavshedsbelagte oplysninger - forretningsforhold": u3_folder + "AB-minifrase - Forretningsforhold - FVL.docx",
                 "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "AB-minifrase - Tavhedsbelagte oplysninger - alle.docx",
                 " ": "Ingen begrundelse valgt.docx",
                 "Intet valgt": "Ingen begrundelse valgt.docx"
             },
             "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)": {
-                "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - Internt dokument - OFL.docx",
-                "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - Internt dokument - OFL.docx",
-                "Internt dokument - del af intern beslutningsproces": "AB-minifrase - Internt dokument - OFL.docx",
-                "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "AB-minifrase - Sagkyndig rådgivning - OFL.docx",
+                "Internt dokument - ufærdigt arbejdsdokument": u4_folder + "AB-minifrase - Internt dokument - OFL.docx",
+                "Internt dokument - foreløbige og sagsforberedende overvejelser": u4_folder + "AB-minifrase - Internt dokument - OFL.docx",
+                "Internt dokument - del af intern beslutningsproces": u4_folder + "AB-minifrase - Internt dokument - OFL.docx",
+                "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": u4_folder + "AB-minifrase - Sagkyndig rådgivning - OFL.docx",
                 "Særlige dokumenter - statistik og undersøgelser": "AB-minifrase - statisktik og undersøgelser - alle.docx",
-                "Særlige dokumenter - straffesag": "AB-minifrase - Dokument i straffesag - OFL.docx",
-                "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - OFL.docx",
-                "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - OFL.docx",
+                "Særlige dokumenter - straffesag": u4_folder + "AB-minifrase - Dokument i straffesag - OFL.docx",
+                "Tavshedsbelagte oplysninger - om private forhold": u4_folder + "AB-minifrase - Private forhold - OFL.docx",
+                "Tavshedsbelagte oplysninger - forretningsforhold": u4_folder + "AB-minifrase - Forretningsforhold - OFL.docx",
                 "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "AB-minifrase - Tavhedsbelagte oplysninger - alle.docx",
                 " ": "Ingen begrundelse valgt.docx",
                 "Intet valgt": "Ingen begrundelse valgt.docx"
