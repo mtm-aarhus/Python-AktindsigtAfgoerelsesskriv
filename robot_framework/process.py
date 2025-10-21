@@ -451,11 +451,11 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
                 doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - miljøopl - ikke part.docx'
             elif Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
-                doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - FVL og MOL.docx'
+                doc_path =  r'AB-hovedfrase - Helt eller delvist afslag - FVL og MOL.docx'
             elif Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
-                doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
+                doc_path =  r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
             elif Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
-                doc_path = hovedfraser_folder + r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
+                doc_path =  r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
             elif Lovgivning == "Andet (Genererer fuld frase) ":
                 doc_path = r'AB-hovedfrase - Alle regelsæt.docx'
             else: 
@@ -464,11 +464,11 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
                 doc_path = hovedfraser_folder +  r'AB-hovedfrase - Helt eller delvist afslag - miljøopl - ikke part.docx'
             elif Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
-                doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - FVL og MOL.docx'
+                doc_path =  r'AB-hovedfrase - Helt eller delvist afslag - FVL og MOL.docx'
             elif Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
-                doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
+                doc_path =  r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
             elif Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
-                doc_path = hovedfraser_folder + r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
+                doc_path =  r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
             elif Lovgivning == "Andet (Genererer fuld frase) ":
                 doc_path = r'AB-hovedfrase - Alle regelsæt.docx'
             else: 
