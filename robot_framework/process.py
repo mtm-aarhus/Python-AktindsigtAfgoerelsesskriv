@@ -417,7 +417,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         password = RobotCredentials.password
         sharepoint_site_url = orchestrator_connection.get_constant("AktbobSharePointURL").value
         parent_folder_url = sharepoint_site_url.split(".com")[-1] +'/Delte Dokumenter/'
-        main_folder = r"\\adm.aarhuskommune.dk\AAK\Hotel1\TDS\dynamictemplate\Fraser\MTM\Aktindsigt\"
+        main_folder = r"\\adm.aarhuskommune.dk\AAK\Hotel1\TDS\dynamictemplate\Fraser\MTM\Aktindsigt\\"
         hovedfraser_folder = main_folder + r"AKTBOB Hovedfraser (systemmappe)"
         u1_folder = main_folder + r"Undtagelser\U 1 Miljøopl., ikke part (MOL + OFL)"
         u2_folder = main_folder + r"Undtagelser\U 2 Miljøopl., part (MOL + FVL)"
