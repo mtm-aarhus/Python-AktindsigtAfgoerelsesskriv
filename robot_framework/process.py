@@ -528,14 +528,14 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                 "Intet valgt": "Ingen begrundelse valgt.docx"
             },
             "Andet (Genererer fuld frase) ": {
-                "Internt dokument - ufærdigt arbejdsdokument": hovedfraser_folder + "AB-minifrase - internt dokument alle love.docx",
-                "Internt dokument - foreløbige og sagsforberedende overvejelser": hovedfraser_folder + "AB-minifrase - internt dokument alle love.docx",
-                "Internt dokument - del af intern beslutningsproces": hovedfraser_folder + "AB-minifrase - internt dokument alle love.docx",
-                "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": hovedfraser_folder + "AB-minifrase - sagkyndig rådgivning alle love.docx",
+                "Internt dokument - ufærdigt arbejdsdokument": hovedfraser_folder + "AB-minifrase - internt dokument - alle love.docx",
+                "Internt dokument - foreløbige og sagsforberedende overvejelser": hovedfraser_folder + "AB-minifrase - internt dokument - alle love.docx",
+                "Internt dokument - del af intern beslutningsproces": hovedfraser_folder + "AB-minifrase - internt dokument - alle love.docx",
+                "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": hovedfraser_folder + "AB-minifrase - sagkyndig rådgivning - alle love.docx",
                 "Særlige dokumenter - statistik og undersøgelser": hovedfraser_folder + "AB-minifrase - statisktik og undersøgelser - alle love.docx",
-                "Særlige dokumenter - straffesag": hovedfraser_folder + "AB-minifrase - Dokument i straffesag alle love.docx",
-                "Tavshedsbelagte oplysninger - om private forhold": hovedfraser_folder + "AB-minifrase - Private forhold alle love.docx",
-                "Tavshedsbelagte oplysninger - forretningsforhold":hovedfraser_folder + "AB-minifrase - Forretningsforhold alle love.docx",
+                "Særlige dokumenter - straffesag": hovedfraser_folder + "AB-minifrase - Dokument i straffesag - alle love.docx",
+                "Tavshedsbelagte oplysninger - om private forhold": hovedfraser_folder + "AB-minifrase - Private forhold - alle love.docx",
+                "Tavshedsbelagte oplysninger - forretningsforhold":hovedfraser_folder + "AB-minifrase - Forretningsforhold - alle love.docx",
                 "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": hovedfraser_folder + "AB-minifrase - Tavhedsbelagte oplysninger - alle love.docx",
                 " ": "Ingen begrundelse valgt.docx",
                 "Intet valgt": "Ingen begrundelse valgt.docx"
