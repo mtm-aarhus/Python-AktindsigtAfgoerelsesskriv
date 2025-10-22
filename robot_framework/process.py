@@ -444,7 +444,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         hovedfraser_folder = main_folder + r"AKTBOB-fraser (systemmappe)\\"
         u1_folder = main_folder + r"Undtagelser\U 1 Miljøopl., ikke part (MOL + OFL)\\"
         u2_folder = main_folder + r"Undtagelser\U 2 Miljøopl., part (MOL + FVL)\\"
-        u3_folder = main_folder + r"Undtagelser\U 3 miljøopl., ikke part (OFL)\\"
+        u3_folder = main_folder + r"Undtagelser\U 3 ikke miljøopl., ikke part (OFL)\\"
         u4_folder = main_folder + r"Undtagelser\U 4 ikke miljøopl., part (FVL)\\"
 
         if Afdeling != 'Plan og Byggeri':
