@@ -484,7 +484,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                 "Særlige dokumenter - straffesag": u1_folder + "U 1.5 Dokument i straffesag - miljøopl., ikke part.docx",
                 "Tavshedsbelagte oplysninger - om private forhold": u1_folder + "U 1.1 Private forhold - miljøopl., ikke part.docx",
                 "Tavshedsbelagte oplysninger - forretningsforhold": u1_folder + "U 1.3 Forretningsforhold - miljøopl., ikke part.docx",
-                "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": hovedfraser_folder + "AB-minifrase - Tavhedsbelagte oplysninger - alle love.docx",
+                "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": hovedfraser_folder + "AB-minifrase - Andre tavshedsbelagte oplysninger - alle love.docx",
                 " ": "Ingen begrundelse valgt.docx",
                 "Intet valgt": "Ingen begrundelse valgt.docx"
             },
@@ -497,7 +497,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                 "Særlige dokumenter - straffesag": u2_folder + "U 2.5 Dokument i straffesag - miljøopl., part.docx",
                 "Tavshedsbelagte oplysninger - om private forhold": u2_folder + "U 2.1 Private forhold - miljøopl., part.docx",
                 "Tavshedsbelagte oplysninger - forretningsforhold": u2_folder + "U 2.3 Forretningsforhold - miljøopl., part.docx",
-                "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": hovedfraser_folder + "AB-minifrase - Tavhedsbelagte oplysninger - alle.docx",
+                "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": hovedfraser_folder + "AB-minifrase - Andre tavshedsbelagte oplysninger - alle love.docx",
                 " ": "Ingen begrundelse valgt.docx",
                 "Intet valgt": "Ingen begrundelse valgt.docx"
             },
@@ -510,7 +510,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                 "Særlige dokumenter - straffesag": u4_folder + "U 4.5 Dokument i straffesag - ikke miljøopl., part.docx",
                 "Tavshedsbelagte oplysninger - om private forhold": u4_folder + "U 4.1 Private forhold - ikke miljøopl., part.docx",
                 "Tavshedsbelagte oplysninger - forretningsforhold": u4_folder + "U 4.3 Forretningsforhold - ikke miljøopl., part.docx",
-                "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": hovedfraser_folder + "AB-minifrase - Tavhedsbelagte oplysninger - alle love.docx",
+                "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": hovedfraser_folder + "AB-minifrase - Andre tavshedsbelagte oplysninger - alle love.docx",
                 " ": "Ingen begrundelse valgt.docx",
                 "Intet valgt": "Ingen begrundelse valgt.docx"
             },
@@ -523,7 +523,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                 "Særlige dokumenter - straffesag": u3_folder + "U 3.5 Dokument i straffesag - ikke miljøopl., ikke part.docx",
                 "Tavshedsbelagte oplysninger - om private forhold": u3_folder + "U 3.1 Private forhold - ikke miljøopl., ikke part.docx",
                 "Tavshedsbelagte oplysninger - forretningsforhold": u3_folder + "U 3.3 Forretningsforhold - ikke miljøopl., ikke part.docx",
-                "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": hovedfraser_folder + "AB-minifrase - Tavhedsbelagte oplysninger - alle love.docx",
+                "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": hovedfraser_folder + "AB-minifrase - Andre tavshedsbelagte oplysninger - alle love.docx",
                 " ": "Ingen begrundelse valgt.docx",
                 "Intet valgt": "Ingen begrundelse valgt.docx"
             },
@@ -536,7 +536,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                 "Særlige dokumenter - straffesag": hovedfraser_folder + "AB-minifrase - Dokument i straffesag - alle love.docx",
                 "Tavshedsbelagte oplysninger - om private forhold": hovedfraser_folder + "AB-minifrase - Private forhold - alle love.docx",
                 "Tavshedsbelagte oplysninger - forretningsforhold":hovedfraser_folder + "AB-minifrase - Forretningsforhold - alle love.docx",
-                "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": hovedfraser_folder + "AB-minifrase - Tavhedsbelagte oplysninger - alle love.docx",
+                "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": hovedfraser_folder + "AB-minifrase - Andre tavshedsbelagte oplysninger - alle love.docx",
                 " ": "Ingen begrundelse valgt.docx",
                 "Intet valgt": "Ingen begrundelse valgt.docx"
             }
