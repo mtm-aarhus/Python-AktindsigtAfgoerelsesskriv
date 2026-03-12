@@ -194,6 +194,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                     if filename.endswith(".xlsx") and not filename.startswith("~$"):
                         file_url = f"{subfolder_url}/{filename}"
                         local_file_path = download_file_from_sharepoint(client, file_url)
+                        time.sleep(5)
                 
                         try:
                             document_results = check_excel_file(local_file_path)
