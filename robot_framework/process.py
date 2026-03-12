@@ -96,11 +96,14 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         return download_path
 
     def check_excel_file(file_path):
-        '''
-        Goes through the document list and saves the data in a dictionary.
-        '''
         print(f'checking file {file_path}')
-        df = pd.read_excel(file_path)
+        try:
+            df = pd.read_excel(file_path)
+            print('excel loaded')
+        except Exception as e:
+            print(f'Fejl i read_excel: {type(e).__name__}: {e}')
+            raise
+    
         documents = []
         if 'Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)' in df.columns and 'Begrundelse hvis nej eller delvis' in df.columns:
             for _, row in df.iterrows():
