@@ -89,7 +89,6 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         '''
         Function for downloading file from sharepoint
         '''
-        print('Downloading file')
         file_name = sharepoint_file_url.split("/")[-1]
         download_path = os.path.join(os.getcwd(), file_name)
         with open(download_path, "wb") as local_file:
@@ -118,7 +117,6 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         '''
         Goes through the different folders to find the excel file (ie. the document list)
         '''
-        print('traversing')
         pattern = re.compile(r"([A-Za-z]\d{4}-\d{1,10}|[A-Za-z]{3}-\d{4}-\d{6})")
         folder = client.web.get_folder_by_server_relative_url(folder_url)
         client.load(folder)
@@ -129,7 +127,6 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         client.execute_query()
 
         for subfolder in subfolders:
-            print(f'In subfolder {subfolder}')
             subfolder_name = subfolder.properties["Name"]
             subfolder_url = f"{folder_url}/{subfolder_name}"
             if re.search(pattern, subfolder_name):
@@ -143,8 +140,10 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                         file_url = f"{subfolder_url}/{file.properties['Name']}"
                         local_file_path = download_file_from_sharepoint(client, file_url)
                         document_results = check_excel_file(local_file_path)
+                        print('Checked file')
                         results[subfolder_name] = document_results  # Ensuring it is a list
                         os.remove(local_file_path)
+                        print('Removed file')
                         break
 
             traverse_and_check_folders(client, subfolder_url, results, orchestrator_connection)
