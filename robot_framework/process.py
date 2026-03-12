@@ -138,7 +138,34 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                 time.sleep(delay)
     
         raise last_error
-
+    def check_excel_file(file_path):
+        print(f'checking file {file_path}')
+    
+        t0 = time.perf_counter()
+        with open(file_path, "rb") as f:
+            excel_bytes = f.read()
+        print(f"read bytes in {time.perf_counter() - t0:.2f}s")
+    
+        t1 = time.perf_counter()
+        df = pd.read_excel(BytesIO(excel_bytes), engine="openpyxl")
+        print(f"excel loaded in {time.perf_counter() - t1:.2f}s")
+    
+        t2 = time.perf_counter()
+        documents = []
+        if 'Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)' in df.columns and 'Begrundelse hvis nej eller delvis' in df.columns:
+            for _, row in df.iterrows():
+                documents.append({
+                    'title': row['Dokumenttitel'],
+                    'decision': row['Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)'],
+                    'reason': row['Begrundelse hvis nej eller delvis'],
+                    'Akt ID': row['Akt ID'],
+                    'Dok ID': row['Dok ID']
+                })
+        print(f"rows parsed in {time.perf_counter() - t2:.2f}s")
+    
+        del df
+        return documents
+        
     def traverse_and_check_folders(client, folder_url, results, orchestrator_connection):
         '''
         Goes through the different folders to find the excel file (ie. the document list)
