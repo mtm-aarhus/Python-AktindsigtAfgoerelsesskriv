@@ -107,7 +107,18 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         with open(file_path, "rb") as f:
             excel_bytes = f.read()
     
-        df = pd.read_excel(BytesIO(excel_bytes), engine="openpyxl")
+       df = pd.read_excel(
+            BytesIO(excel_bytes),
+            engine="openpyxl",
+            sheet_name=0,
+            usecols=[
+                'Dokumenttitel',
+                'Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)',
+                'Begrundelse hvis nej eller delvis',
+                'Akt ID',
+                'Dok ID'
+            ]
+        )
         print('excel loaded')
     
         documents = []
