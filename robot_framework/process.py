@@ -89,17 +89,17 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         except Exception as e:
             orchestrator_connection.log_info(f"❌ Error uploading file: {str(e)}")
 
-   def download_file_from_sharepoint(client, sharepoint_file_url):
+    def download_file_from_sharepoint(client, sharepoint_file_url):
         '''
         Function for downloading file from sharepoint
         '''
         file_name = sharepoint_file_url.split("/")[-1]
         unique_name = f"{uuid.uuid4()}_{file_name}"
         download_path = os.path.join(os.getcwd(), unique_name)
-    
+        
         with open(download_path, "wb") as local_file:
             client.web.get_file_by_server_relative_path(sharepoint_file_url).download(local_file).execute_query()
-    
+        
         return download_path
     def check_excel_file(file_path):
         print(f'checking file {file_path}')
