@@ -22,6 +22,10 @@ import math
 import smtplib
 from email.message import EmailMessage
 from docx import Document
+import time
+import gc
+import uuid
+from io import BytesIO
 
 def safe_open_docx(path):
     """Kopierer filen lokalt og åbner kopien, så originalen ikke røres."""
@@ -85,35 +89,55 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         except Exception as e:
             orchestrator_connection.log_info(f"❌ Error uploading file: {str(e)}")
 
-    def download_file_from_sharepoint(client, sharepoint_file_url):
+   def download_file_from_sharepoint(client, sharepoint_file_url):
         '''
         Function for downloading file from sharepoint
         '''
         file_name = sharepoint_file_url.split("/")[-1]
-        download_path = os.path.join(os.getcwd(), file_name)
+        unique_name = f"{uuid.uuid4()}_{file_name}"
+        download_path = os.path.join(os.getcwd(), unique_name)
+    
         with open(download_path, "wb") as local_file:
             client.web.get_file_by_server_relative_path(sharepoint_file_url).download(local_file).execute_query()
+    
         return download_path
-
     def check_excel_file(file_path):
-    print(f'checking file {file_path}')
-    with open(file_path, "rb") as f:
-        excel_bytes = f.read()
-
-    df = pd.read_excel(BytesIO(excel_bytes), engine="openpyxl")
-    print("excel loaded")
-
-    documents = []
-    if 'Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)' in df.columns and 'Begrundelse hvis nej eller delvis' in df.columns:
-        for _, row in df.iterrows():
-            documents.append({
-                'title': row['Dokumenttitel'],
-                'decision': row['Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)'],
-                'reason': row['Begrundelse hvis nej eller delvis'],
-                'Akt ID': row['Akt ID'],
-                'Dok ID': row['Dok ID']
-            })
-    return documents
+        print(f'checking file {file_path}')
+    
+        with open(file_path, "rb") as f:
+            excel_bytes = f.read()
+    
+        df = pd.read_excel(BytesIO(excel_bytes), engine="openpyxl")
+        print('excel loaded')
+    
+        documents = []
+        if 'Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)' in df.columns and 'Begrundelse hvis nej eller delvis' in df.columns:
+            for _, row in df.iterrows():
+                documents.append({
+                    'title': row['Dokumenttitel'],
+                    'decision': row['Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)'],
+                    'reason': row['Begrundelse hvis nej eller delvis'],
+                    'Akt ID': row['Akt ID'],
+                    'Dok ID': row['Dok ID']
+                })
+    
+        del df
+        return documents
+        
+    def remove_with_retry(path, retries=10, delay=1):
+        last_error = None
+        for attempt in range(retries):
+            try:
+                os.remove(path)
+                print(f"removed file: {path}")
+                return
+            except PermissionError as e:
+                last_error = e
+                print(f"file still locked, attempt {attempt + 1}/{retries}: {path}")
+                gc.collect()
+                time.sleep(delay)
+    
+        raise last_error
 
     def traverse_and_check_folders(client, folder_url, results, orchestrator_connection):
         '''
@@ -137,14 +161,22 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                 client.execute_query()
 
                 for file in files:
-                    print(f'in file {file}')
-                    if file.properties["Name"].endswith(".xlsx"):
-                        file_url = f"{subfolder_url}/{file.properties['Name']}"
+                    filename = file.properties["Name"]
+                    print(f'in file {filename}')
+                
+                    if filename.endswith(".xlsx") and not filename.startswith("~$"):
+                        file_url = f"{subfolder_url}/{filename}"
                         local_file_path = download_file_from_sharepoint(client, file_url)
-                        document_results = check_excel_file(local_file_path)
-                        print('Checked file')
-                        results[subfolder_name] = document_results  # Ensuring it is a list
-                        os.remove(local_file_path)
+                
+                        try:
+                            document_results = check_excel_file(local_file_path)
+                            print('Checked file')
+                            results[subfolder_name] = document_results
+                        finally:
+                            gc.collect()
+                            time.sleep(2)
+                            remove_with_retry(local_file_path)
+                
                         print('Removed file')
                         break
 
