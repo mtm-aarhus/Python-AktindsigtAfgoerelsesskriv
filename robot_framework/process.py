@@ -547,12 +547,17 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         certification = orchestrator_connection.get_credential("SharePointCert")
         api = orchestrator_connection.get_credential("SharePointAPI")
         client = sharepoint_client(username, password, sharepoint_site_url, tenant = api.username, client_id = api.password, thumbprint = certification.username , cert_path = certification.password)
+        print('Got client')
         results = {}
         traverse_and_check_folders(client, f'{parent_folder_url}Dokumentlister/{DeskproTitel}', results, orchestrator_connection)
+        print('Checked folders')
         update_document_with_besvarelse(doc_path, results, DeskproTitel= DeskproTitel, AnsøgerEmail= AnsøgerEmail, AnsøgerNavn= AnsøgerNavn, Afdeling= Afdeling, AktindsigtsDato = AktindsigtsDato, Beskrivelse = Beskrivelse)
+        print('update doc')
 
         unique_reasons = extract_unique_reasons(results)
+        print('extracted unique')
         internal_docs = prepare_internal_document_if_needed(unique_reasons, Lovgivning, doc_map_by_lovgivning)
+        print('prepped internal doc')
         used_doc_map = {}
 
         for reason in unique_reasons:
@@ -564,8 +569,10 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                     used_doc_map[reason] = doc
 
         replace_placeholder_with_multiple_documents("Afgørelse.docx", used_doc_map, "[RELEVANTE_TEKSTER]")
+        print('replaced')
         orchestrator_connection.log_info('Document updating, uploading to sharepoint')
         upload_to_sharepoint(client, DeskproTitel, r'Afgørelse.docx', folder_url = f'{parent_folder_url}Aktindsigter/{DeskproTitel}')
+        print('uploaded to sharepoint')
         if slet:
             afgorelse_path = "Afgørelse.docx"
             if os.path.exists(afgorelse_path):
