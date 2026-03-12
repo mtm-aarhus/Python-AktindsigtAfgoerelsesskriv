@@ -95,39 +95,43 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
             client.web.get_file_by_server_relative_path(sharepoint_file_url).download(local_file).execute_query()
         return download_path
 
-  def check_excel_file(file_path):
-      print(f'checking file {file_path}')
-      print(f'size: {os.path.getsize(file_path)} bytes')
-
-      t0 = time.perf_counter()
-      wb = load_workbook(
-          file_path,
-          read_only=True,
-          data_only=True,
-          keep_links=False
-      )
-      print(f'workbook loaded in {time.perf_counter() - t0:.2f}s')
-      print(f'sheets: {wb.sheetnames}')
-
-      ws = wb[wb.sheetnames[0]]
-
-      rows = ws.iter_rows(values_only=True)
-      headers = next(rows)
-      print(f'headers: {headers}')
-
-      idx = {name: i for i, name in enumerate(headers)}
-
-      documents = []
-      for row in rows:
-          documents.append({
-              'title': row[idx['Dokumenttitel']],
-              'decision': row[idx['Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)']],
-              'reason': row[idx['Begrundelse hvis nej eller delvis']],
-              'Akt ID': row[idx['Akt ID']],
-              'Dok ID': row[idx['Dok ID']]
-          })
-
-      return documents
+    import os
+    import time
+    from openpyxl import load_workbook
+    
+    def check_excel_file(file_path):
+        print(f'checking file {file_path}')
+        print(f'size: {os.path.getsize(file_path)} bytes')
+    
+        t0 = time.perf_counter()
+        wb = load_workbook(
+            file_path,
+            read_only=True,
+            data_only=True,
+            keep_links=False
+        )
+        print(f'workbook loaded in {time.perf_counter() - t0:.2f}s')
+        print(f'sheets: {wb.sheetnames}')
+    
+        ws = wb[wb.sheetnames[0]]
+    
+        rows = ws.iter_rows(values_only=True)
+        headers = next(rows)
+        print(f'headers: {headers}')
+    
+        idx = {name: i for i, name in enumerate(headers)}
+    
+        documents = []
+        for row in rows:
+            documents.append({
+                'title': row[idx['Dokumenttitel']],
+                'decision': row[idx['Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)']],
+                'reason': row[idx['Begrundelse hvis nej eller delvis']],
+                'Akt ID': row[idx['Akt ID']],
+                'Dok ID': row[idx['Dok ID']]
+            })
+    
+        return documents
 
     def traverse_and_check_folders(client, folder_url, results, orchestrator_connection):
         '''
