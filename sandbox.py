@@ -26,31 +26,116 @@ import shutil
 import uuid
 orchestrator_connection = OrchestratorConnection("AktindsigtAfgørelsesskriv", os.getenv('OpenOrchestratorSQL'),os.getenv('OpenOrchestratorKey'), None)
 
+from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
+from OpenOrchestrator.database.queues import QueueElement
+import re
+import os
+import pandas as pd
+from office365.runtime.auth.user_credential import UserCredential
+from office365.sharepoint.client_context import ClientContext
+from docx.shared import Pt
+from docx.shared import Inches
+from docx import Document
+import json
+import shutil
+from datetime import date
+import datetime
+from copy import deepcopy
+from docx import Document
+import os
+import requests
+import shutil
+from urllib.parse import quote
+import math
+import smtplib
+from email.message import EmailMessage
+from docx import Document
+import time
+import gc
+import uuid
+from io import BytesIO
 
+def safe_open_docx(path):
+    """Kopierer filen lokalt og åbner kopien, så originalen ikke røres."""
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Filen findes ikke: {path}")
 
-"""This module contains the main process of the robot."""
-def sharepoint_client(username, password, sharepoint_site_url):
-    ctx = ClientContext(sharepoint_site_url).with_credentials(UserCredential(username, password))
+    # lav lokal kopi med unikt navn
+    filename = os.path.basename(path)
+    local_copy = os.path.join(os.getcwd(), f"temp_{filename}")
+    shutil.copy2(path, local_copy)
+
+    # åbn kopien
+    return Document(local_copy), local_copy
+
+def sharepoint_client(username, password, sharepoint_site_url, tenant, client_id, thumbprint, cert_path):
+    cert_credentials = {
+        "tenant": tenant,
+        "client_id": client_id,
+        "thumbprint": thumbprint,
+        "cert_path": cert_path
+    }
+    ctx = ClientContext(sharepoint_site_url).with_client_certificate(**cert_credentials)
     web = ctx.web
     ctx.load(web)
     ctx.execute_query()
     return ctx
+
+def upload_to_sharepoint(client: ClientContext, folder_name: str, file_path: str, folder_url: str):
+    """
+    Uploads a file to a specific folder in a SharePoint document library.
+
+    :param client: Authenticated SharePoint client context
+    :param folder_name: Name of the target folder within the document library
+    :param file_path: Local file path to upload
+    :param folder_url: SharePoint folder URL where the file should be uploaded
+    """
+    try:
+        # Extract file name safely
+        file_name = os.path.basename(file_path)
+
+        # Define the SharePoint document library structure
+        document_library = f"{folder_url.split('/', 1)[-1]}/Delte Dokumenter/Aktindsigter"
+        folder_path = f"{document_library}/{folder_name}"
+
+        # Read file into memory (Prevents closed file issue)
+        with open(file_path, "rb") as file:
+            file_content = file.read()  
+
+        # Get SharePoint folder reference
+        target_folder = client.web.get_folder_by_server_relative_url(folder_url)
+
+        # Upload file using byte content
+        target_folder.upload_file(file_name, file_content)
+        
+        # Execute request
+        client.execute_query()
+        orchestrator_connection.log_info(f"✅ Successfully uploaded: {file_name} to {folder_path}")
+
+    except Exception as e:
+        orchestrator_connection.log_info(f"❌ Error uploading file: {str(e)}")
 
 def download_file_from_sharepoint(client, sharepoint_file_url):
     '''
     Function for downloading file from sharepoint
     '''
     file_name = sharepoint_file_url.split("/")[-1]
-    download_path = os.path.join(os.getcwd(), file_name)
+    unique_name = f"{uuid.uuid4()}_{file_name}"
+    download_path = os.path.join(os.getcwd(), unique_name)
+    
     with open(download_path, "wb") as local_file:
         client.web.get_file_by_server_relative_path(sharepoint_file_url).download(local_file).execute_query()
+    
     return download_path
-
 def check_excel_file(file_path):
-    '''
-    Goes through the document list and saves the data in a dictionary.
-    '''
-    df = pd.read_excel(file_path)
+    print(f'checking file {file_path}')
+
+    with open(file_path, "rb") as f:
+        excel_bytes = f.read()
+
+    df = pd.read_excel(BytesIO(excel_bytes),engine="openpyxl",sheet_name='Sagsoversigt',usecols=['Dokumenttitel','Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)','Begrundelse hvis nej eller delvis','Akt ID','Dok ID'])
+    print('excel loaded')
+
     documents = []
     if 'Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)' in df.columns and 'Begrundelse hvis nej eller delvis' in df.columns:
         for _, row in df.iterrows():
@@ -61,8 +146,52 @@ def check_excel_file(file_path):
                 'Akt ID': row['Akt ID'],
                 'Dok ID': row['Dok ID']
             })
-    return documents
 
+    del df
+    return documents
+    
+def remove_with_retry(path, retries=10, delay=1):
+    last_error = None
+    for attempt in range(retries):
+        try:
+            os.remove(path)
+            print(f"removed file: {path}")
+            return
+        except PermissionError as e:
+            last_error = e
+            print(f"file still locked, attempt {attempt + 1}/{retries}: {path}")
+            gc.collect()
+            time.sleep(delay)
+
+    raise last_error
+def check_excel_file(file_path):
+    print(f'checking file {file_path}')
+
+    t0 = time.perf_counter()
+    with open(file_path, "rb") as f:
+        excel_bytes = f.read()
+    print(f"read bytes in {time.perf_counter() - t0:.2f}s")
+
+    t1 = time.perf_counter()
+    df = pd.read_excel(BytesIO(excel_bytes), engine="openpyxl")
+    print(f"excel loaded in {time.perf_counter() - t1:.2f}s")
+
+    t2 = time.perf_counter()
+    documents = []
+    if 'Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)' in df.columns and 'Begrundelse hvis nej eller delvis' in df.columns:
+        for _, row in df.iterrows():
+            documents.append({
+                'title': row['Dokumenttitel'],
+                'decision': row['Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)'],
+                'reason': row['Begrundelse hvis nej eller delvis'],
+                'Akt ID': row['Akt ID'],
+                'Dok ID': row['Dok ID']
+            })
+    print(f"rows parsed in {time.perf_counter() - t2:.2f}s")
+
+    del df
+    return documents
+    
 def traverse_and_check_folders(client, folder_url, results, orchestrator_connection):
     '''
     Goes through the different folders to find the excel file (ie. the document list)
@@ -85,12 +214,24 @@ def traverse_and_check_folders(client, folder_url, results, orchestrator_connect
             client.execute_query()
 
             for file in files:
-                if file.properties["Name"].endswith(".xlsx"):
-                    file_url = f"{subfolder_url}/{file.properties['Name']}"
+                filename = file.properties["Name"]
+                print(f'in file {filename}')
+            
+                if filename.endswith(".xlsx") and not filename.startswith("~$"):
+                    file_url = f"{subfolder_url}/{filename}"
                     local_file_path = download_file_from_sharepoint(client, file_url)
-                    document_results = check_excel_file(local_file_path)
-                    results[subfolder_name] = document_results  # Ensuring it is a list
-                    os.remove(local_file_path)
+                    time.sleep(2)
+            
+                    try:
+                        document_results = check_excel_file(local_file_path)
+                        print('Checked file')
+                        results[subfolder_name] = document_results
+                    finally:
+                        gc.collect()
+                        time.sleep(2)
+                        remove_with_retry(local_file_path)
+            
+                    print('Removed file')
                     break
 
         traverse_and_check_folders(client, subfolder_url, results, orchestrator_connection)
@@ -129,7 +270,7 @@ def update_document_with_besvarelse(doc_path, case_details, DeskproTitel, Ansøg
         "[beskrivelse]": Beskrivelse
     }
 
-    doc = Document(doc_path)
+    doc, temp_path = safe_open_docx(doc_path)
 
     # 1. Brødtekst og tabeller i hoveddokumentet
     replace_in_paragraphs(doc.paragraphs, replacements)
@@ -146,15 +287,17 @@ def update_document_with_besvarelse(doc_path, case_details, DeskproTitel, Ansøg
             replace_in_tables(footer.tables, replacements)
 
     doc.save("Afgørelse.docx")
-    print("✅ Dokument opdateret og gemt som 'Afgørelse.docx'")
+    if os.path.exists(temp_path):
+        os.remove(temp_path)
+    orchestrator_connection.log_info("✅ Dokument opdateret og gemt som 'Afgørelse.docx'")
 
 def update_internal_template_with_documenttypes(source_doc_path: str, reasons: list, placeholder: str = "[Dokumenttype]"):
     """
     Erstatter placeholder [Dokumenttype] i et dokument med en bulletliste over relevante interne dokumenttyper.
     Tilføjer visuel indrykning og anvender ikke styles, da de ikke altid er defineret.
     """
-    from docx import Document
-    doc = Document(source_doc_path)
+    # Lav en midlertidig lokal kopi
+    doc, temp_path = safe_open_docx(source_doc_path)
 
     internt_reason_to_text = {
         "Internt dokument - ufærdigt arbejdsdokument": "Udkast til dokumenter",
@@ -169,10 +312,10 @@ def update_internal_template_with_documenttypes(source_doc_path: str, reasons: l
     }
 
     if not relevant_texts:
-        print("ℹ️  Ingen interne dokumenttyper fundet – ingen ændringer foretaget.")
+        orchestrator_connection.log_info("ℹ️  Ingen interne dokumenttyper fundet – ingen ændringer foretaget.")
         return
 
-    print(f"📝  Indsætter dokumenttyper i {source_doc_path}: {sorted(relevant_texts)}")
+    orchestrator_connection.log_info(f"📝  Indsætter dokumenttyper i {source_doc_path}: {sorted(relevant_texts)}")
 
     for paragraph in doc.paragraphs:
         if placeholder in paragraph.text:
@@ -189,7 +332,12 @@ def update_internal_template_with_documenttypes(source_doc_path: str, reasons: l
                 insert_index += 1
             break
 
-    doc.save(source_doc_path)
+    # Gem ændringerne i den lokale kopi — ikke på netværket
+    doc.save(temp_path)
+    orchestrator_connection.log_info(f"✅ Midlertidig intern template opdateret: {temp_path}")
+
+    return temp_path  # returnér stien til kopien
+
 
 
 def replace_placeholder_with_multiple_documents(target_doc_path: str, reason_doc_map: dict, placeholder: str):
@@ -197,11 +345,11 @@ def replace_placeholder_with_multiple_documents(target_doc_path: str, reason_doc
     Erstatter placeholder i target_doc med indhold fra flere dokumenter i rækkefølge.
     Hvis reason_doc_map er tom, fjernes placeholderen stille og roligt.
     """
-    print(f"➡️  Åbner hoveddokument for fletning: {target_doc_path}")
+    orchestrator_connection.log_info(f"➡️  Åbner hoveddokument for fletning: {target_doc_path}")
     target_doc = Document(target_doc_path)
 
     if not reason_doc_map:
-        print(f"➡️  Ingen dokumenter at indsætte. Fjerner placeholder '{placeholder}'")
+        orchestrator_connection.log_info(f"➡️  Ingen dokumenter at indsætte. Fjerner placeholder '{placeholder}'")
         for paragraph in target_doc.paragraphs:
             if placeholder in paragraph.text:
                 paragraph.text = ""
@@ -215,17 +363,19 @@ def replace_placeholder_with_multiple_documents(target_doc_path: str, reason_doc
             parent.remove(paragraph._element)
 
             for reason, doc_path in reason_doc_map.items():
-                print(f"    ↪️ Indsætter '{doc_path}' pga. begrundelse: '{reason}'")
+                orchestrator_connection.log_info(f"    ↪️ Indsætter '{doc_path}' pga. begrundelse: '{reason}'")
 
                 if not os.path.exists(doc_path):
                     print(f"    ⚠️  Fil ikke fundet: {doc_path}")
                     continue
 
-                source_doc = Document(doc_path)
+                source_doc, temp_path = safe_open_docx(doc_path)
                 for para in source_doc.paragraphs:
                     para_copy = deepcopy(para._element)
                     parent.insert(insert_index, para_copy)
                     insert_index += 1
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
 
             break
             # Ryd op i midlertidige dokumenter
@@ -233,12 +383,13 @@ def replace_placeholder_with_multiple_documents(target_doc_path: str, reason_doc
         if os.path.basename(path).startswith("temp_internal_") and os.path.exists(path):
             try:
                 os.remove(path)
-                print(f"🗑  Slettede midlertidig fil: {path}")
+                orchestrator_connection.log_info(f"🗑  Slettede midlertidig fil: {path}")
             except Exception as e:
-                print(f"⚠️  Kunne ikke slette {path}: {e}")
+                orchestrator_connection.log_info(f"⚠️  Kunne ikke slette {path}: {e}")
 
         target_doc.save(target_doc_path)
-    print(f"✅  Fletning afsluttet og gemt i: {target_doc_path}")
+
+    orchestrator_connection.log_info(f"✅  Fletning afsluttet og gemt i: {target_doc_path}")
 
 def prepare_internal_document_if_needed(reasons: list, lovgivning: str, doc_map_by_lovgivning: dict) -> dict:
     """
@@ -268,13 +419,14 @@ def prepare_internal_document_if_needed(reasons: list, lovgivning: str, doc_map_
         internal_template_key = "Internt dokument - ufærdigt arbejdsdokument"
         original_path = doc_map_by_lovgivning.get(lovgivning, {}).get(internal_template_key)
 
-        print(f"➡️  Der skal bruges internt dokument for alias: {internal_alias}")
+        orchestrator_connection.log_info(f"➡️  Der skal bruges internt dokument for alias: {internal_alias}")
 
         if original_path:
-            update_internal_template_with_documenttypes(original_path, used_internal_reasons)
-            updated_docs[internal_alias] = original_path
+            temp_internal_path = update_internal_template_with_documenttypes(original_path, used_internal_reasons)
+            updated_docs[internal_alias] = temp_internal_path
+
         else:
-            print(f"⚠️  Dokument ikke fundet: {original_path}")
+            orchestrator_connection.log_info(f"⚠️  Dokument ikke fundet: {original_path}")
 
     return updated_docs
 
@@ -298,12 +450,12 @@ def extract_unique_reasons(results_dict):
 
                 # Hvis None eller NaN (float)
                 if reason_raw is None or (isinstance(reason_raw, float) and math.isnan(reason_raw)):
-                    print('Ingen begrundelse valgt')
+                    orchestrator_connection.log_info('Ingen begrundelse valgt')
                     reason = 'Intet valgt'
                 else:
                     reason_str = str(reason_raw).strip()
                     if not reason_str or reason_str.lower() == "nan":
-                        print('Ingen begrundelse valgt')
+                        orchestrator_connection.log_info('Ingen begrundelse valgt')
                         reason = 'Intet valgt'
                     else:
                         reason = reason_str
@@ -316,148 +468,225 @@ def extract_unique_reasons(results_dict):
     return list(cleaned)
 
 #Getting queue elements
-# queue_json = json.loads(queue_element.data)
-DeskproTitel = "2283 - Aktindsigt Nyt vikingemuseum"
-AnsøgerNavn = "Navn"
-AnsøgerEmail = "mail"
-Afdeling = "afdeling"
-DeskProID = "2283"
+queue_element = json.dumps({
+   
+})
+queue_json = json.loads(queue_element)
+DeskproTitel = queue_json.get('Aktindsigtsovermappe') 
+AnsøgerNavn = queue_json.get('AnsøgerNavn') or ""
+AnsøgerEmail = queue_json.get('AnsøgerEmail') or ""
+Afdeling = queue_json.get('Afdeling') or ""
+DeskProID = queue_json.get('DeskProID')
 KMDNovaURL = orchestrator_connection.get_constant("KMDNovaURL").value
-AktindsigtsDato = "2025-06-13T00:00:00Z"
-Lovgivning = "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)"
-print('kører')
+AktindsigtsDato = queue_json.get("AktindsigtsDato") or ""
+Lovgivning = queue_json.get('Lovgivning')
+SagsbehandlerEmail = queue_json.get("SagsbehandlerEmail")
 
-#Getting oo stuff
-API_aktbob = orchestrator_connection.get_credential('AktbobAPIKey')
-url = f'{API_aktbob.username}/submissions?deskproId={DeskProID}'
-key = API_aktbob.password
+if DeskproTitel is None:
+    # SMTP Configuration (from your provided details)
+    SMTP_SERVER = "smtp.adm.aarhuskommune.dk"
+    SMTP_PORT = 25
+    SCREENSHOT_SENDER = "aktbob@aarhus.dk"
+    subject = f"Fejl i oprettelsen af afgørelsesskriv til sag {DeskProID}"
 
-#Getting description of aktindsigt
-headers = {
-    'ApiKey': key
-    }
-response = requests.request("GET", url, headers=headers)
-data = response.json()
-Beskrivelse = data[0].get("requestDescription", "")
-if not Beskrivelse:
-    Beskrivelse = ""
+    html = """
+    <html>
+    <body>
+        <p>Hej,</p>
+        <p>Aktbob kunne ikke oprette afgørelsesskrivelsen. Dette sker oftest, hvis dokumentet forsøges oprettet, før dokumentlisten er oprettet og udfyldt.</p>
+        <p>Kontrollér, at dokumentlisten er oprettet og udfyldt, og prøv derefter at oprette afgørelsesskrivelsen igen.</p>
+        <p>Hvis fejlen fortsætter, eller hvis dokumentlisten allerede er oprettet, kan du kontakte Aktbob-teamet for hjælp.</p> 
+    </body>
+    </html>
+    """
 
-RobotCredentials = orchestrator_connection.get_credential("RobotCredentials")
-username = RobotCredentials.username
-password = RobotCredentials.password
-sharepoint_site_url = orchestrator_connection.get_constant("AktbobSharePointURL").value
-parent_folder_url = sharepoint_site_url.split(".com")[-1] +'/Delte Dokumenter/'
+    msg= EmailMessage()
+    msg['To'] = SagsbehandlerEmail
+    msg['From'] = SCREENSHOT_SENDER
+    msg['Subject'] = subject
+    msg.set_content("Please enable HTML to view this message.")
+    msg.add_alternative(html, subtype='html')
 
-if Afdeling != 'Plan og Byggeri':
-    if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
-        doc_path = r'AB-hovedfrase - Helt eller delvist afslag - OFL og MOL.docx'
-    elif Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
-        doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL og MOL.docx'
-    elif Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
-        doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
-    elif Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
-        doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
-    elif Lovgivning == "Andet (Genererer fuld frase) ":
-        doc_path = r'AB-hovedfrase - Alle regelsæt.docx'
-    else: 
-        doc_path = r'MISSING.docx'
+    # Send the email using SMTP
+    try:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as smtp:
+            smtp.send_message(msg)
+            orchestrator_connection.log_info('Processen fejlede pga. manglende overmappe')
+    except Exception as e:
+        orchestrator_connection.log_info(f"Failed to send success email: {e}")
 else:
-    if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
-        doc_path = r'AB-hovedfrase - Helt eller delvist afslag - OFL og MOL.docx'
-    elif Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
-        doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL og MOL.docx'
-    elif Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
-        doc_path = r'AB-hovedfrase - Helt eller delvist afslag - FVL - ikke MOL.docx'
-    elif Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
-        doc_path = r'AB-hovedfrase - helt eller delvist afslag - OFL - ikke MOL.docx'
-    elif Lovgivning == "Andet (Genererer fuld frase) ":
-        doc_path = r'AB-hovedfrase - Alle regelsæt.docx'
-    else: 
-        doc_path = r'MISSING.docx'
+    #Getting oo stuff
+    API_aktbob = orchestrator_connection.get_credential('AktbobAPIKey')
+    url = f'{API_aktbob.username}/submissions?deskproId={DeskProID}'
+    key = API_aktbob.password
 
-doc_map_by_lovgivning = {
-    "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)": {
-        "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - OFL og MOL.docx",
-        "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument - OFL og MOL.docx",
-        "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - OFL og MOL.docx",
-        "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "AB-minifrase - sagkyndig rådgivning - OFL og MOL.docx",
-        "Særlige dokumenter - statistik og undersøgelser": "AB-minifrase - statisktik og undersøgelser - alle.docx",
-        "Særlige dokumenter - straffesag": "AB-minifrase - Dokument i straffesag - OFL og MOL.docx",
-        "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - OFL og MOL.docx",
-        "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - OFL og MOL.docx",
-        "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "AB-minifrase - Tavhedsbelagte oplysninger - alle.docx",
-        " ": "Ingen begrundelse valgt.docx",
-        "Intet valgt": "Ingen begrundelse valgt.docx"
-    },
-    "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)": {
-        "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - FVL og MOL.docx",
-        "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument - FVL og MOL.docx",
-        "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - FVL og MOL.docx",
-        "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "AB-minifrase - sagkyndig rådgivning - FVL og MOL.docx",
-        "Særlige dokumenter - statistik og undersøgelser": "AB-minifrase - statisktik og undersøgelser - alle.docx",
-        "Særlige dokumenter - straffesag": "AB-minifrase - Dokument i straffesag - FVL og MOL.docx",
-        "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - FVL og MOL.docx",
-        "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - FVL og MOL.docx",
-        "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "AB-minifrase - Tavhedsbelagte oplysninger - alle.docx",
-        " ": "Ingen begrundelse valgt.docx",
-        "Intet valgt": "Ingen begrundelse valgt.docx"
-    },
-    "Part, ingen miljøoplysning (2014 forvaltningsloven)": {
-        "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument - FVL.docx",
-        "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument - FVL.docx",
-        "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument - FVL.docx",
-        "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "AB-minifrase - Sagkyndig rådgivning - FVL.docx",
-        "Særlige dokumenter - statistik og undersøgelser": "AB-minifrase - statisktik og undersøgelser - alle.docx",
-        "Særlige dokumenter - straffesag": "AB-minifrase - Dokument i straffesag - FVL.docx",
-        "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - FVL.docx",
-        "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - FVL.docx",
-        "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "AB-minifrase - Tavhedsbelagte oplysninger - alle.docx",
-        " ": "Ingen begrundelse valgt.docx",
-        "Intet valgt": "Ingen begrundelse valgt.docx"
-    },
-    "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)": {
-        "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - Internt dokument - OFL.docx",
-        "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - Internt dokument - OFL.docx",
-        "Internt dokument - del af intern beslutningsproces": "AB-minifrase - Internt dokument - OFL.docx",
-        "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "AB-minifrase - Sagkyndig rådgivning - OFL.docx",
-        "Særlige dokumenter - statistik og undersøgelser": "AB-minifrase - statisktik og undersøgelser - alle.docx",
-        "Særlige dokumenter - straffesag": "AB-minifrase - Dokument i straffesag - OFL.docx",
-        "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold - OFL.docx",
-        "Tavshedsbelagte oplysninger - forretningsforhold": "AB-minifrase - Forretningsforhold - OFL.docx",
-        "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "AB-minifrase - Tavhedsbelagte oplysninger - alle.docx",
-        " ": "Ingen begrundelse valgt.docx",
-        "Intet valgt": "Ingen begrundelse valgt.docx"
-    },
-    "Andet (Genererer fuld frase) ": {
-        "Internt dokument - ufærdigt arbejdsdokument": "AB-minifrase - internt dokument alle.docx",
-        "Internt dokument - foreløbige og sagsforberedende overvejelser": "AB-minifrase - internt dokument alle.docx",
-        "Internt dokument - del af intern beslutningsproces": "AB-minifrase - internt dokument alle.docx",
-        "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": "AB-minifrase - sagkyndig rådgivning alle.docx",
-        "Særlige dokumenter - statistik og undersøgelser": "AB-minifrase - statisktik og undersøgelser - alle.docx",
-        "Særlige dokumenter - straffesag": "AB-minifrase - Dokument i straffesag alle.docx",
-        "Tavshedsbelagte oplysninger - om private forhold": "AB-minifrase - Private forhold alle.docx",
-        "Tavshedsbelagte oplysninger - forretningsforhold":"AB-minifrase - Forretningsforhold alle.docx",
-        "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": "AB-minifrase - Tavhedsbelagte oplysninger - alle.docx",
-        " ": "Ingen begrundelse valgt.docx",
-        "Intet valgt": "Ingen begrundelse valgt.docx"
-    }
-}
+    #Getting description of aktindsigt
+    headers = {
+        'ApiKey': key
+        }
+    response = requests.request("GET", url, headers=headers)
+    data = response.json()
+    Beskrivelse = data[0].get("requestDescription", "")
+    if not Beskrivelse:
+        Beskrivelse = ""
 
-client = sharepoint_client(username, password, sharepoint_site_url)
-results = {}
-traverse_and_check_folders(client, f'{parent_folder_url}Dokumentlister/{DeskproTitel}', results, orchestrator_connection)
-update_document_with_besvarelse(doc_path, results, DeskproTitel= DeskproTitel, AnsøgerEmail= AnsøgerEmail, AnsøgerNavn= AnsøgerNavn, Afdeling= Afdeling, AktindsigtsDato = AktindsigtsDato, Beskrivelse = Beskrivelse)
+    RobotCredentials = orchestrator_connection.get_credential("RobotCredentials")
+    username = RobotCredentials.username
+    password = RobotCredentials.password
+    sharepoint_site_url = orchestrator_connection.get_constant("AktbobSharePointURL").value
+    parent_folder_url = sharepoint_site_url.split(".com")[-1] +'/Delte Dokumenter/'
+    main_folder = r"\\adm.aarhuskommune.dk\AAK\Hotel1\TDS\dynamictemplate\Fraser\MTM\Aktindsigt\\"
+    hovedfraser_folder = main_folder + r"AKTBOB-fraser (systemmappe)\\"
+    u1_folder = main_folder + r"Undtagelser\U 1 Miljøopl., ikke part (MOL + OFL)\\"
+    u2_folder = main_folder + r"Undtagelser\U 2 Miljøopl., part (MOL + FVL)\\"
+    u3_folder = main_folder + r"Undtagelser\U 3 ikke miljøopl., ikke part (OFL)\\"
+    u4_folder = main_folder + r"Undtagelser\U 4 ikke miljøopl., part (FVL)\\"
 
-unique_reasons = extract_unique_reasons(results)
-internal_docs = prepare_internal_document_if_needed(unique_reasons, Lovgivning, doc_map_by_lovgivning)
-used_doc_map = {}
-
-for reason in unique_reasons:
-    if reason == "__intern__" and "__intern__" in internal_docs:
-        used_doc_map[reason] = internal_docs["__intern__"]
+    if Afdeling != 'Plan og Byggeri':
+        if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
+            doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - miljøopl - ikke part.docx'
+        elif Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
+            doc_path =  hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - miljøopl - part.docx'
+        elif Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
+            doc_path =  hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - ikke miljøopl - part.docx'
+        elif Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
+            doc_path =  hovedfraser_folder + r'AB-hovedfrase - helt eller delvist afslag - ikke miljøopl - ikke part.docx'
+        elif Lovgivning == "Andet (Genererer fuld frase) ":
+            doc_path = hovedfraser_folder + r'AB-hovedfrase - Alle regelsæt.docx'
+        else: 
+            doc_path = r'MISSING.docx'
     else:
-        doc = doc_map_by_lovgivning.get(Lovgivning, {}).get(reason)
-        if doc:
-            used_doc_map[reason] = doc
+        if Lovgivning == "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)":
+            doc_path = hovedfraser_folder +  r'AB-hovedfrase - Helt eller delvist afslag - miljøopl - ikke part.docx'
+        elif Lovgivning == "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)":
+            doc_path = hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - miljøopl - part.docx'
+        elif Lovgivning == "Part, ingen miljøoplysning (2014 forvaltningsloven)":
+            doc_path =  hovedfraser_folder + r'AB-hovedfrase - Helt eller delvist afslag - ikke miljøopl - part.docx'
+        elif Lovgivning == "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)":
+            doc_path = hovedfraser_folder + r'AB-hovedfrase - helt eller delvist afslag - ikke miljøopl - ikke part.docx'
+        elif Lovgivning == "Andet (Genererer fuld frase) ":
+            doc_path = hovedfraser_folder + r'AB-hovedfrase - Alle regelsæt.docx'
+        else: 
+            doc_path = r'MISSING.docx'
 
-replace_placeholder_with_multiple_documents("Afgørelse.docx", used_doc_map, "[RELEVANTE_TEKSTER]")
+    doc_map_by_lovgivning = {
+        "Ikke part, miljøoplysning (1985 offentligthedsloven og miljøoplysningsloven)": {
+            "Internt dokument - ufærdigt arbejdsdokument": u1_folder + "U 1.2 Internt dokument - miljøopl., ikke part.docx",
+            "Internt dokument - foreløbige og sagsforberedende overvejelser": u1_folder + "U 1.2 Internt dokument - miljøopl., ikke part.docx",
+            "Internt dokument - del af intern beslutningsproces": u1_folder + "U 1.2 Internt dokument - miljøopl., ikke part.docx",
+            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": u1_folder + "U 1.4 Sagkyndig rådgivning - miljøopl., ikke part.docx",
+            "Særlige dokumenter - statistik og undersøgelser": hovedfraser_folder + "AB-minifrase - statisktik og undersøgelser - alle love.docx",
+            "Særlige dokumenter - straffesag": u1_folder + "U 1.5 Dokument i straffesag - miljøopl., ikke part.docx",
+            "Tavshedsbelagte oplysninger - om private forhold": u1_folder + "U 1.1 Private forhold - miljøopl., ikke part.docx",
+            "Tavshedsbelagte oplysninger - forretningsforhold": u1_folder + "U 1.3 Forretningsforhold - miljøopl., ikke part.docx",
+            "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": hovedfraser_folder + "AB-minifrase - Andre tavshedsbelagte oplysninger - alle love.docx",
+            " ": "Ingen begrundelse valgt.docx",
+            "Intet valgt": "Ingen begrundelse valgt.docx"
+        },
+        "Part, miljøoplysning (2012 forvaltningsloven og miljøoplysningsloven)": {
+            "Internt dokument - ufærdigt arbejdsdokument": u2_folder + "U 2.2 Internt dokument - miljøopl., part.docx",
+            "Internt dokument - foreløbige og sagsforberedende overvejelser": u2_folder + "U 2.2 Internt dokument - miljøopl., part.docx",
+            "Internt dokument - del af intern beslutningsproces": u2_folder + "U 2.2 Internt dokument - miljøopl., part.docx",
+            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": u2_folder + "U 2.4 Sagkyndig rådgivning - miljøopl., part.docx",
+            "Særlige dokumenter - statistik og undersøgelser": hovedfraser_folder + "AB-minifrase - statisktik og undersøgelser - alle love.docx",
+            "Særlige dokumenter - straffesag": u2_folder + "U 2.5 Dokument i straffesag - miljøopl., part.docx",
+            "Tavshedsbelagte oplysninger - om private forhold": u2_folder + "U 2.1 Private forhold - miljøopl., part.docx",
+            "Tavshedsbelagte oplysninger - forretningsforhold": u2_folder + "U 2.3 Forretningsforhold - miljøopl., part.docx",
+            "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": hovedfraser_folder + "AB-minifrase - Andre tavshedsbelagte oplysninger - alle love.docx",
+            " ": "Ingen begrundelse valgt.docx",
+            "Intet valgt": "Ingen begrundelse valgt.docx"
+        },
+        "Part, ingen miljøoplysning (2014 forvaltningsloven)": {
+            "Internt dokument - ufærdigt arbejdsdokument": u4_folder + "U 4.2 Internt dokument - ikke miljøopl., part.docx",
+            "Internt dokument - foreløbige og sagsforberedende overvejelser": u4_folder + "U 4.2 Internt dokument - ikke miljøopl., part.docx",
+            "Internt dokument - del af intern beslutningsproces": u4_folder + "U 4.2 Internt dokument - ikke miljøopl., part.docx",
+            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": u4_folder + "U 4.4 Sagkyndig rådgivning - ikke miljøopl., part.docx",
+            "Særlige dokumenter - statistik og undersøgelser": hovedfraser_folder +"AB-minifrase - statisktik og undersøgelser - alle love.docx",
+            "Særlige dokumenter - straffesag": u4_folder + "U 4.5 Dokument i straffesag - ikke miljøopl., part.docx",
+            "Tavshedsbelagte oplysninger - om private forhold": u4_folder + "U 4.1 Private forhold - ikke miljøopl., part.docx",
+            "Tavshedsbelagte oplysninger - forretningsforhold": u4_folder + "U 4.3 Forretningsforhold - ikke miljøopl., part.docx",
+            "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": hovedfraser_folder + "AB-minifrase - Andre tavshedsbelagte oplysninger - alle love.docx",
+            " ": "Ingen begrundelse valgt.docx",
+            "Intet valgt": "Ingen begrundelse valgt.docx"
+        },
+        "Ikke part, ingen miljøoplysning (2020 offentlighedsloven)": {
+            "Internt dokument - ufærdigt arbejdsdokument": u3_folder + "U 3.2 Internt dokument - ikke miljøopl., ikke part.docx",
+            "Internt dokument - foreløbige og sagsforberedende overvejelser": u3_folder + "U 3.2 Internt dokument - ikke miljøopl., ikke part.docx",
+            "Internt dokument - del af intern beslutningsproces": u3_folder + "U 3.2 Internt dokument - ikke miljøopl., ikke part.docx",
+            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": u3_folder + "U 3.4 Sagkyndig rådgivning - ikke miljøopl., ikke part.docx",
+            "Særlige dokumenter - statistik og undersøgelser": hovedfraser_folder + "AB-minifrase - statisktik og undersøgelser - alle love.docx",
+            "Særlige dokumenter - straffesag": u3_folder + "U 3.5 Dokument i straffesag - ikke miljøopl., ikke part.docx",
+            "Tavshedsbelagte oplysninger - om private forhold": u3_folder + "U 3.1 Private forhold - ikke miljøopl., ikke part.docx",
+            "Tavshedsbelagte oplysninger - forretningsforhold": u3_folder + "U 3.3 Forretningsforhold - ikke miljøopl., ikke part.docx",
+            "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": hovedfraser_folder + "AB-minifrase - Andre tavshedsbelagte oplysninger - alle love.docx",
+            " ": "Ingen begrundelse valgt.docx",
+            "Intet valgt": "Ingen begrundelse valgt.docx"
+        },
+        "Andet (Genererer fuld frase) ": {
+            "Internt dokument - ufærdigt arbejdsdokument": hovedfraser_folder + "AB-minifrase - internt dokument - alle love.docx",
+            "Internt dokument - foreløbige og sagsforberedende overvejelser": hovedfraser_folder + "AB-minifrase - internt dokument - alle love.docx",
+            "Internt dokument - del af intern beslutningsproces": hovedfraser_folder + "AB-minifrase - internt dokument - alle love.docx",
+            "Særlige dokumenter - korrespondance med sagkyndig rådgiver vedr. tvistsag": hovedfraser_folder + "AB-minifrase - sagkyndig rådgivning - alle love.docx",
+            "Særlige dokumenter - statistik og undersøgelser": hovedfraser_folder + "AB-minifrase - statisktik og undersøgelser - alle love.docx",
+            "Særlige dokumenter - straffesag": hovedfraser_folder + "AB-minifrase - Dokument i straffesag - alle love.docx",
+            "Tavshedsbelagte oplysninger - om private forhold": hovedfraser_folder + "AB-minifrase - Private forhold - alle love.docx",
+            "Tavshedsbelagte oplysninger - forretningsforhold":hovedfraser_folder + "AB-minifrase - Forretningsforhold - alle love.docx",
+            "Tavshedsbelagte oplysninger - Andet (uddybes i afgørelsen)": hovedfraser_folder + "AB-minifrase - Andre tavshedsbelagte oplysninger - alle love.docx",
+            " ": "Ingen begrundelse valgt.docx",
+            "Intet valgt": "Ingen begrundelse valgt.docx"
+        }
+    }
+
+    #Skal den lokale version af afgørelse slettes?
+    slet = True
+    certification = orchestrator_connection.get_credential("SharePointCert")
+    api = orchestrator_connection.get_credential("SharePointAPI")
+    client = sharepoint_client(username, password, sharepoint_site_url, tenant = api.username, client_id = api.password, thumbprint = certification.username , cert_path = certification.password)
+    print('Got client')
+    results = {}
+    traverse_and_check_folders(client, f'{parent_folder_url}Dokumentlister/{DeskproTitel}', results, orchestrator_connection)
+    print('Checked folders')
+    update_document_with_besvarelse(doc_path, results, DeskproTitel= DeskproTitel, AnsøgerEmail= AnsøgerEmail, AnsøgerNavn= AnsøgerNavn, Afdeling= Afdeling, AktindsigtsDato = AktindsigtsDato, Beskrivelse = Beskrivelse)
+    print('update doc')
+
+    unique_reasons = extract_unique_reasons(results)
+    print('extracted unique')
+    internal_docs = prepare_internal_document_if_needed(unique_reasons, Lovgivning, doc_map_by_lovgivning)
+    print('prepped internal doc')
+    used_doc_map = {}
+
+    for reason in unique_reasons:
+        if reason == "__intern__" and "__intern__" in internal_docs:
+            used_doc_map[reason] = internal_docs["__intern__"]
+        else:
+            doc = doc_map_by_lovgivning.get(Lovgivning, {}).get(reason)
+            if doc:
+                used_doc_map[reason] = doc
+
+    replace_placeholder_with_multiple_documents("Afgørelse.docx", used_doc_map, "[RELEVANTE_TEKSTER]")
+    print('replaced')
+    orchestrator_connection.log_info('Document updating, uploading to sharepoint')
+    upload_to_sharepoint(client, DeskproTitel, r'Afgørelse.docx', folder_url = f'{parent_folder_url}Aktindsigter/{DeskproTitel}')
+    print('uploaded to sharepoint')
+    if slet:
+        afgorelse_path = "Afgørelse.docx"
+        if os.path.exists(afgorelse_path):
+            os.remove(afgorelse_path)
+            orchestrator_connection.log_info(f"🗑  Slettede midlertidig fil: {afgorelse_path}")
+        else:
+            orchestrator_connection.log_info(f"⚠️  Filen '{afgorelse_path}' blev ikke fundet og kunne derfor ikke slettes.")
+    #Putting sharepointlink to case top folder in deskpro
+
+    deskproURL = orchestrator_connection.get_constant('DeskproOvermappeAPILink').value
+    API_url = orchestrator_connection.get_constant("AktbobSharePointURL").value
+
+    payload = json.dumps({
+        "deskproTicketId": f'{DeskProID}',
+        "overmappeURL": f'{API_url}/Delte%20Dokumenter/Aktindsigter/{quote(DeskproTitel)}'
+        })
+    
+    headers = {
+        'Content-Type': 'application/json'
+        }
+    response_deskpro = requests.request("POST", deskproURL, headers=headers, data=payload)
+    response_deskpro.raise_for_status()
