@@ -80,7 +80,7 @@ def _read_excel_worker(file_path, result_queue):
         result_queue.put(("error", traceback.format_exc()))
 
 
-def check_excel_file_with_timeout(file_path, timeout_seconds=300):
+def check_excel_file_with_timeout(file_path, timeout_seconds=900):
     result_queue = multiprocessing.Queue()
     proc = multiprocessing.Process(
         target=_read_excel_worker,
@@ -195,7 +195,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
                         try:
                             document_results = check_excel_file_with_timeout(
                                 local_file_path,
-                                timeout_seconds=300,
+                                timeout_seconds=900,
                             )
                             print("Checked file")
                             results[subfolder_name] = document_results
