@@ -87,19 +87,28 @@ def check_excel_file_with_timeout(file_path, timeout_seconds=900):
         args=(file_path, result_queue),
     )
     proc.start()
-    proc.join(timeout=timeout_seconds)
+    deadline = time.monotonic() + timeout_seconds
+    while True:
+        try:
+            status, payload = result_queue.get(timeout=0.25)
+            break
+        except queue.Empty:
+            if not proc.is_alive():
+                proc.join()
+                raise RuntimeError("Excel-underprocessen afsluttede uden resultat.")
 
+            if time.monotonic() >= deadline:
+                proc.terminate()
+                proc.join()
+                raise TimeoutError(
+                    f"Excel-læsning overskred timeout på {timeout_seconds} sekunder: {file_path}"
+                )
+
+    # On Windows, joining before reading the queue can block while the child flushes data.
+    proc.join(timeout=5)
     if proc.is_alive():
         proc.terminate()
         proc.join()
-        raise TimeoutError(
-            f"Excel-læsning overskred timeout på {timeout_seconds} sekunder: {file_path}"
-        )
-
-    try:
-        status, payload = result_queue.get_nowait()
-    except queue.Empty:
-        raise RuntimeError("Excel-underprocessen afsluttede uden resultat.")
 
     if status == "error":
         raise RuntimeError(payload)
